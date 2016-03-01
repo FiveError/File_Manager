@@ -77,9 +77,9 @@ void deleteAll(files **flast)
 	}
 	*flast = NULL;
 
-}
-	int main() {
-		int choice = 1;
+}											  //////////////////////////////////////
+	int main() {                              //Надо придумать графическое меню!!!//
+		int choice = 1;						  //////////////////////////////////////
 		files *flast = flist.next;
 		while (choice)
 		{
