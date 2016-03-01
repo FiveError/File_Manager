@@ -24,14 +24,14 @@ void add(_finddata_t a, files ***b)
 	files *last = **b;
 	adding->file = a;
 	adding->next = NULL;
-	if (last)
+	if (last)                //Список в правильном порядке
 	{
 		while (last->next) last = last->next;
 		last->next = adding;
 	}
 	else
 		**b = adding;
-	//adding->next = *b;
+	//adding->next = *b;     //Список в обратном порядке
 	//*b = adding;
 }
 
