@@ -78,11 +78,12 @@ void deleteAll(files **flast)
 		delete del;
 	}
 	*flast = NULL;
-
 }
 
-	int main() {
-		int choice = 1;
+
+	int main() 
+	{                         
+		int choice = 1;						  
 		files *flast = flist.next;
 		while (choice)
 		{
