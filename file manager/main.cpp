@@ -7,6 +7,7 @@
 #include <io.h>  
 #include <iostream>
 #include <conio.h>
+#include <Windows.h>
 
 using namespace std;
 
@@ -82,7 +83,8 @@ void deleteAll(files **flast)
 
 
 	int main() 
-	{                         
+	{     
+		system("color 1b");
 		int choice = 1;						  
 		files *flast = flist.next;
 		while (choice)
@@ -103,6 +105,9 @@ void deleteAll(files **flast)
 				deleteAll(&flast);
 				break;
 			default: 
+				cout << "Error";
+				Sleep(500);
+				system("cls");
 				break;
 			}
 		}
