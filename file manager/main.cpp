@@ -15,14 +15,16 @@ char path[100] = "";
 
 struct files{
 	_finddata_t file;
+	files *prev;
 	files *next;
 }flist;
 
-void add(_finddata_t a, files ***b)
+void add(_finddata_t a, files **b)
 {
 	files *adding = new files;
-	files *last = **b;
 	adding->file = a;
+	adding->prev = NULL;
+	/*files *last = *b;
 	adding->next = NULL;
 	if (last)                //Список в правильном порядке
 	{
@@ -30,9 +32,10 @@ void add(_finddata_t a, files ***b)
 		last->next = adding;
 	}
 	else
-		**b = adding;
-	//adding->next = *b;     //Список в обратном порядке
-	//*b = adding;
+		**b = adding; */
+	adding->next = *b;     //Список в обратном порядке
+	*b = adding;
+	if ((adding->next)) (*b)->next->prev = adding;
 }
 
 void show(files *first)
@@ -55,11 +58,11 @@ void searchFiles(char path[100], files **flast) // принимает два параметра: путь
 	p = _findfirst(path, &myfile); 
 	if (p != -1)
 	{
-		add(myfile, &flast);
+		add(myfile, flast);
 	}
 		while (_findnext(p, &myfile) != -1)
 		{
-			add(myfile, &flast);
+			add(myfile, flast);
 		} 
 		_findclose(p);
 	
@@ -78,6 +81,7 @@ void deleteAll(files **flast)
 	*flast = NULL;
 
 }
+
 	int main() {
 		int choice = 1;
 		files *flast = flist.next;

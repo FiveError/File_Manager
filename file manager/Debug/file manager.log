@@ -1,4 +1,4 @@
-﻿Сборка начата 01.03.2016 22:00:14.
+﻿Сборка начата 06.03.2016 15:10:37.
      1>Проект "C:\Projects\File manager\file manager\file manager.vcxproj" в узле 2 (целевые объекты Build).
      1>ClCompile:
          C:\Программы\Visual Studio\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
@@ -11,4 +11,4 @@
 
 Сборка успешно завершена.
 
-Затраченное время: 00:00:02.85
+Затраченное время: 00:00:03.03
