@@ -8,8 +8,9 @@
 #include <iostream>
 #include <conio.h>
 #include <Windows.h>
+#include <direct.h>
 using namespace std;
-char path[100] = "c:\\*.*";
+//char path[100] = "*.*";
 struct files{
 	_finddata_t file;
 	files *prev;
@@ -77,10 +78,10 @@ void show(files *first)
 		showing = showing->next;
 	}
 }	
-void searchFiles(char path[100], files **flast) // принимает два параметра: путь и указатель на начало списка
+void searchFiles(files **flast) // принимает два параметра: путь и указатель на начало списка
 {
 	struct _finddata_t myfile;  intptr_t p;
-	p = _findfirst(path, &myfile); 
+	p = _findfirst("*.*", &myfile); 
 	if (p != -1)
 	{
 		add(myfile, flast);
@@ -110,19 +111,27 @@ void GetFileName(files *flast, char *buffer, int k)
 	for (; k > 0; --k) flast=flast->next;
 	memcpy(buffer, flast->file.name, 80);
 }
+int GetFileAttrib(files *flast, int k)
+{
+	int a;
+	for (; k > 0; --k) flast = flast->next;
+	a = flast->file.attrib;
+	return a;
+}
 
 	int main() 
 	{     
+		_chdir("C:\\");
 		char buffer[80];
 		setlocale(LC_ALL, "rus");
 		system("color 1f");
 		int choice = 1, CrntStr = 0, key;
 		files *flast = flist.next;
-		searchFiles(path, &flast);
+		searchFiles(&flast);
 		show(flast);
-		SelectStr(CrntStr);
 		do
 		{
+			SelectStr(CrntStr);
 			key = _getch();
 			if (key == 224)
 			{
@@ -150,6 +159,16 @@ void GetFileName(files *flast, char *buffer, int k)
 				}
 
 				SelectStr(CrntStr);
+			}
+			if ((key == 13) && (GetFileAttrib(flast, CrntStr) == _A_SUBDIR))
+			{
+				GetFileName(flast, buffer, CrntStr);
+				_chdir(buffer);
+				deleteAll(&flast);
+				searchFiles(&flast);
+				system("cls");
+				show(flast);
+				CrntStr = 0;
 			}
 		} while (key != 27);
 		return 0;
