@@ -10,12 +10,11 @@
 #include <Windows.h>
 #include <direct.h>
 using namespace std;
-//char path[100] = "*.*";
 struct files{
 	_finddata_t file;
 	files *prev;
 	files *next;
-}flist;
+}flist, slist;
 enum ConsoleColor {
 	Black = 0,
 	Blue = 1,
@@ -34,6 +33,14 @@ enum ConsoleColor {
 	Yellow = 14,
 	White = 15
 };
+void DisableCursor()
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO CCI;
+	CCI.bVisible = false;
+	CCI.dwSize = 1;
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CCI);
+}
 void SetColor(ConsoleColor a, ConsoleColor b)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -44,6 +51,21 @@ void SelectStr(int a)
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD position = { 0, a };
 	SetConsoleCursorPosition(hConsole, position);
+}
+void addFiles(_finddata_t a, files **b)
+{
+	files *adding = new files;
+	adding->file = a;
+	files *last = *b;
+	adding->next = NULL;
+	if (last)               
+	{
+		while (last->next) last = last->next;
+		adding->prev = last;
+		last->next = adding;
+	}
+	else
+		*b = adding;
 }
 void add(_finddata_t a, files **b)
 {
@@ -68,31 +90,16 @@ void show(files *first)
 	files *showing = first;
 	if (showing) {
 		SetColor(Cyan, White);
-		printf("%1s\n", showing->file.name);
+		printf("%s\t%d\n", showing->file.name, showing->file.attrib);
 		showing=showing->next;
 	}
 	SetColor(Blue, White);
 	while ((showing))
 	{
-		printf("%1s\n", showing->file.name);
+		printf("%s\t%d\n", showing->file.name, showing->file.attrib);
 		showing = showing->next;
 	}
 }	
-void searchFiles(files **flast) // принимает два параметра: путь и указатель на начало списка
-{
-	struct _finddata_t myfile;  intptr_t p;
-	p = _findfirst("*.*", &myfile); 
-	if (p != -1)
-	{
-		add(myfile, flast);
-	}
-		while (_findnext(p, &myfile) != -1)
-		{
-			add(myfile, flast);
-		} 
-		_findclose(p);
-	
-}
 void deleteAll(files **flast)
 {
 	files *t = *flast;
@@ -101,10 +108,72 @@ void deleteAll(files **flast)
 	while (t)
 	{
 		del = t;
-		t= t->next;
+		t = t->next;
 		delete del;
 	}
 	*flast = NULL;
+}
+/*void SortAlphWRONG!!!(files *flast)
+{
+	files *pointer = flast;
+	files *sortFiles = slist.next;
+	while (pointer->next) pointer = pointer->next;
+	while (pointer->prev)
+	{
+		if (pointer->file.attrib == _A_SUBDIR)
+			addFiles(pointer->file, &sortFiles);
+		pointer = pointer->prev;
+	}
+	while (pointer->next) pointer = pointer->next;
+	while (pointer->prev)
+	{
+		if (pointer->file.attrib != _A_SUBDIR)
+			addFiles(pointer->file, &sortFiles);
+		pointer = pointer->prev;
+	}
+	flast = sortFiles;
+	deleteAll(&sortFiles);
+}*/
+void sortAlph(files **flast)
+{
+	files *pointer = *flast;
+	files *sortFiles = slist.next;
+	while (pointer)
+	{
+		if ((pointer->file.attrib == _A_SUBDIR) || (pointer->file.attrib == 17) 
+			|| (pointer->file.attrib == 22)) addFiles(pointer->file, &sortFiles);
+		pointer = pointer->next;
+	}
+	pointer = *flast;
+	while (pointer)
+	{
+		if ((pointer->file.attrib != _A_SUBDIR) && (pointer->file.attrib != 17)
+			&& (pointer->file.attrib != 22)) addFiles(pointer->file, &sortFiles);
+		pointer = pointer->next;
+	}
+	deleteAll(flast);
+	*flast = sortFiles;
+	pointer = flist.next;
+	flist.next = slist.next;
+	slist.next = pointer;
+}
+void searchFiles(files **flast, unsigned int *a) // принимает два параметра: путь и указатель на начало списка
+{
+	*a = 0;
+	struct _finddata_t myfile;  intptr_t p;
+	p = _findfirst("*.*", &myfile); 
+	if (p != -1)
+	{
+		addFiles(myfile, flast);
+		(*a)++;
+	}
+		while (_findnext(p, &myfile) != -1)
+		{
+			addFiles(myfile, flast);
+			(*a)++;
+		} 
+		_findclose(p);
+		sortAlph(flast);
 }
 void GetFileName(files *flast, char *buffer, int k)
 {
@@ -120,14 +189,16 @@ int GetFileAttrib(files *flast, int k)
 }
 
 	int main() 
-	{     
+	{
+		DisableCursor();
 		_chdir("C:\\");
+		unsigned int fCount;
 		char buffer[80];
 		setlocale(LC_ALL, "rus");
 		system("color 1f");
 		int choice = 1, CrntStr = 0, key;
 		files *flast = flist.next;
-		searchFiles(&flast);
+		searchFiles(&flast, &fCount);
 		show(flast);
 		do
 		{
@@ -136,7 +207,7 @@ int GetFileAttrib(files *flast, int k)
 			if (key == 224)
 			{
 				key = _getch();
-				if (key == 80)
+				if ((key == 80) && (CrntStr < (fCount-1)))
 				{
 					GetFileName(flast, buffer, CrntStr);
 					SetColor(Blue, White);
@@ -147,7 +218,7 @@ int GetFileAttrib(files *flast, int k)
 					SetColor(Cyan, White);
 					printf("%s", buffer);
 				}
-				if (key == 72) {
+				if ((key == 72) && (CrntStr)) {
 					GetFileName(flast, buffer, CrntStr);
 					SetColor(Blue, White);
 					printf("%s", buffer);
@@ -160,16 +231,28 @@ int GetFileAttrib(files *flast, int k)
 
 				SelectStr(CrntStr);
 			}
-			if ((key == 13) && (GetFileAttrib(flast, CrntStr) == _A_SUBDIR))
+			if ((key == 13) && ((GetFileAttrib(flast, CrntStr) == _A_SUBDIR) 
+				|| (GetFileAttrib(flast, CrntStr) == 17) || (GetFileAttrib(flast, CrntStr) == 22)))
+			//if ((key == 13) && (GetFileAttrib(flast, CrntStr) != 32))
 			{
 				GetFileName(flast, buffer, CrntStr);
 				_chdir(buffer);
 				deleteAll(&flast);
-				searchFiles(&flast);
+				searchFiles(&flast, &fCount);
 				system("cls");
 				show(flast);
 				CrntStr = 0;
 			}
+			if (key == 8)
+			{
+				_chdir("..");
+				deleteAll(&flast);
+				searchFiles(&flast, &fCount);
+				system("cls");
+				show(flast);
+				CrntStr = 0;
+			}
+			SetColor(Blue, White);
 		} while (key != 27);
 		return 0;
 	}
