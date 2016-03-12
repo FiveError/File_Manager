@@ -175,25 +175,64 @@ void searchFiles(files **flast, unsigned int *a) // принимает два параметра: пут
 		_findclose(p);
 		sortAlph(flast);
 }
-void GetFileName(files *flast, char *buffer, int k)
+void GetFileName(files *flast, char *buffer, int CrntStr)
 {
-	for (; k > 0; --k) flast=flast->next;
+	for (; CrntStr > 0; --CrntStr) flast=flast->next;
 	memcpy(buffer, flast->file.name, 80);
 }
-int GetFileAttrib(files *flast, int k)
+int GetFileAttrib(files *flast, int CrntStr)
 {
 	int a;
-	for (; k > 0; --k) flast = flast->next;
+	for (; CrntStr > 0; --CrntStr) flast = flast->next;
 	a = flast->file.attrib;
 	return a;
+}
+/*bool CheckFile(files *flast, char *fCheck, unsigned int fCount)
+{
+	for (int i = 0; i < fCount; ++i)
+	{
+
+		flast = flast->next;
+	}
+
+	
+}*/
+void FileCopy(FILE *source, FILE *dist)
+{
+	unsigned int fsize, n;
+	fseek(source, 0, SEEK_END);
+	fsize = ftell(source);
+	rewind(source);
+	char *buffer;
+	n = fsize / 65536;
+	for (int i = 0; i < n; ++i)
+	{
+		buffer = new char[65536];
+		fread(buffer, 65536, sizeof(char), source);
+		fwrite(buffer, 65536, sizeof(char), dist);
+		delete[] buffer;
+	}
+	int ost = fsize - n * 65536;
+	buffer = new char[ost];
+	fread(buffer, ost, sizeof(char), source);
+	fwrite(buffer, ost, sizeof(char), dist);
+	delete[] buffer;
+}
+void RefreshFiles(files **flast, unsigned int *fCount)
+{
+	deleteAll(flast);
+	searchFiles(flast, fCount);
+	system("cls");
+	show(*flast);
 }
 
 	int main() 
 	{
 		DisableCursor();
 		_chdir("C:\\");
+		FILE *source = NULL, *dist;
 		unsigned int fCount;
-		char buffer[80];
+		char buffer[80], fCopy[260];
 		setlocale(LC_ALL, "rus");
 		system("color 1f");
 		int choice = 1, CrntStr = 0, key;
@@ -228,7 +267,13 @@ int GetFileAttrib(files *flast, int k)
 					SetColor(Cyan, White);
 					printf("%s", buffer);
 				}
-
+				if (key == 83)
+				{
+					GetFileName(flast, buffer, CrntStr);
+					remove(buffer);
+					RefreshFiles(&flast, &fCount);
+					CrntStr = 0;
+				}
 				SelectStr(CrntStr);
 			}
 			if ((key == 13) && ((GetFileAttrib(flast, CrntStr) == _A_SUBDIR) 
@@ -237,22 +282,38 @@ int GetFileAttrib(files *flast, int k)
 			{
 				GetFileName(flast, buffer, CrntStr);
 				_chdir(buffer);
-				deleteAll(&flast);
-				searchFiles(&flast, &fCount);
-				system("cls");
-				show(flast);
+				RefreshFiles(&flast, &fCount);
 				CrntStr = 0;
 			}
 			if (key == 8)
 			{
 				_chdir("..");
-				deleteAll(&flast);
-				searchFiles(&flast, &fCount);
-				system("cls");
-				show(flast);
+				RefreshFiles(&flast, &fCount);
 				CrntStr = 0;
 			}
+			if (key == 'c')
+			{
+				if (source != NULL) fclose(source);
+				GetFileName(flast, fCopy, CrntStr);
+				source = fopen(fCopy, "r+b");
+			}
+			if ((key == 'v') && (source != NULL))
+			{
+				dist = fopen(fCopy, "r+b");
+				if (dist != NULL)
+				{
+					fclose(dist);
+				}
+				dist = fopen(fCopy, "w+b");
+				FileCopy(source, dist);
+				fclose(dist);
+				RefreshFiles(&flast, &fCount);
+				CrntStr = 0;
+			}
+			
+
 			SetColor(Blue, White);
 		} while (key != 27);
+		if (source != NULL) fclose(source);
 		return 0;
 	}
