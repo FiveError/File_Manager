@@ -9,7 +9,9 @@
 #include <conio.h>
 #include <Windows.h>
 #include <direct.h>
+
 using namespace std;
+FILE *fLog;
 struct files{
 	_finddata_t file;
 	files *prev;
@@ -41,6 +43,12 @@ void DisableCursor()
 	CCI.dwSize = 1;
 	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CCI);
 }
+void SetBufferSize(int x, int y)
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD BufferSize = { x,y };
+	SetConsoleScreenBufferSize(hConsole, BufferSize);
+}
 void SetColor(ConsoleColor a, ConsoleColor b)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -51,7 +59,7 @@ void SelectStr(int a)
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD position = { 0, a };
 	SetConsoleCursorPosition(hConsole, position);
-}
+}	 
 void addFiles(_finddata_t a, files **b)
 {
 	files *adding = new files;
@@ -85,18 +93,19 @@ void add(_finddata_t a, files **b)
 	*b = adding;
 	if ((adding->next)) (*b)->next->prev = adding;
 }
-void show(files *first)
+void show(files *first)	
 {
+	int i = 23; //высота консоли
 	files *showing = first;
 	if (showing) {
 		SetColor(Cyan, White);
-		printf("%s\t%d\n", showing->file.name, showing->file.attrib);
+		printf("%s\t%X\n", showing->file.name, showing->file.attrib);
 		showing=showing->next;
 	}
 	SetColor(Blue, White);
-	while ((showing))
+	while ((showing && i--))
 	{
-		printf("%s\t%d\n", showing->file.name, showing->file.attrib);
+		printf("%s\t%X\n", showing->file.name, showing->file.attrib);
 		showing = showing->next;
 	}
 }	
@@ -225,9 +234,19 @@ void RefreshFiles(files **flast, unsigned int *fCount)
 	system("cls");
 	show(*flast);
 }
+void addLog(char *message)
+{
+	int i;
+	for (i = 0; message[i]; ++i);
+	fwrite(message, i+1, sizeof(char), fLog);
+	fwrite("\n", 1, sizeof(char), fLog);
+}
 
 	int main() 
 	{
+		fLog = fopen("logfile.log", "w");
+		addLog("Программа запущена");
+		SetBufferSize(80, 25);
 		DisableCursor();
 		_chdir("C:\\");
 		FILE *source = NULL, *dist;
@@ -296,6 +315,8 @@ void RefreshFiles(files **flast, unsigned int *fCount)
 				if (source != NULL) fclose(source);
 				GetFileName(flast, fCopy, CrntStr);
 				source = fopen(fCopy, "r+b");
+				if (source != NULL)  addLog("Файл добавлен в буфер");
+				else addLog("Ошибка открытия файла");
 			}
 			if ((key == 'v') && (source != NULL))
 			{
@@ -315,5 +336,7 @@ void RefreshFiles(files **flast, unsigned int *fCount)
 			SetColor(Blue, White);
 		} while (key != 27);
 		if (source != NULL) fclose(source);
+		addLog("Программа выключена");
+		fclose(fLog);
 		return 0;
 	}
