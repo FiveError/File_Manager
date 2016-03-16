@@ -46,7 +46,9 @@ void DisableCursor()
 void SetBufferSize(COORD BufferSize)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SMALL_RECT src = { 0, 0, BufferSize.X-1, BufferSize.Y-1 };
 	SetConsoleScreenBufferSize(hConsole, BufferSize);
+	SetConsoleWindowInfo(hConsole, TRUE, &src);
 }
 void SetColor(ConsoleColor a, ConsoleColor b)
 {
@@ -115,29 +117,86 @@ void showStr(char *FileName, _fsize_t FileSize, int x)
 	printf("%c", 179);
 	setlocale(LC_ALL, "rus");
 	if (!FileSize)
-		printf("FOLDER");
-	else
-		printf("%d", FileSize);
-
-}
-void show(files *first, COORD ConsoleSize)	
-{
-	int i = ConsoleSize.Y - 5;
-	files *showing = first;
-	if (showing) {
-		SetColor(Cyan, White);
-		SelectStr(ConsoleSize.Y - 5 - i);
-		showStr(showing->file.name, showing->file.size, ConsoleSize.X);
-		showing=showing->next;
-	}
-	i--;
-	SetColor(Blue, White);
-	while ((showing && i))
 	{
+		printf("FOLDER");
+		for (int i = 0; i < x / 6 - 6; i++)
+			printf(" ");
+	}
+	else
+	{
+		if (FileSize / 10000000)
+		{
+			FileSize /= 1024*1024;
+			printf("%dMB", FileSize);
+		}
+		else
+		if (FileSize / 10000)
+		{
+			FileSize /= 1024;
+			printf("%dKB", FileSize);
+		}
+		else printf("%dB ", FileSize);
+		int k = 0;
+		while (FileSize)
+		{
+			FileSize /= 10;
+			k++;
+		}
+		for (int i = 0; i < (x / 6 - 2 - k); i++)
+			printf(" ");
+	}
+}
+void showClearStr(int x)
+{
+	x -= 2;
+	for (int i = 0; i < (5 * x / 6 - 1); i++)
+		printf(" ");
+	setlocale(LC_ALL, "C");
+	printf("%c", 179);
+	setlocale(LC_ALL, "rus");
+	for (int i = 0; i < (x / 6); i++)
+		printf(" ");
+}
+void show(files *first, COORD ConsoleSize, int a, bool b)	
+{
+	files *showing = first;
+	for (int i = 0; i < a; i++) showing = showing->next;
+	int i = ConsoleSize.Y - 5;
+	if (!b)
+	{
+		SetColor(Cyan, White);
 		SelectStr(ConsoleSize.Y - 5 - i);
 		showStr(showing->file.name, showing->file.size, ConsoleSize.X);
 		showing = showing->next;
 		i--;
+		SetColor(Blue, White);
+		while ((showing && i))
+		{
+			SelectStr(ConsoleSize.Y - 5 - i);
+			showStr(showing->file.name, showing->file.size, ConsoleSize.X);
+			showing = showing->next;
+			i--;
+		}
+	}
+	else
+	{
+		SetColor(Blue, White);
+		while ((showing && i-1))
+		{
+			SelectStr(ConsoleSize.Y - 5 - i);
+			showStr(showing->file.name, showing->file.size, ConsoleSize.X);
+			showing = showing->next;
+			i--;
+		}
+		SetColor(Cyan, White);
+		SelectStr(ConsoleSize.Y - 5 - i);
+		showStr(showing->file.name, showing->file.size, ConsoleSize.X);
+		i--;
+	}
+	if (i) for (; i > 0; i--)
+	{
+		SelectStr(ConsoleSize.Y - 5 - i);
+		showClearStr(ConsoleSize.X);
 	}
 }	
 void deleteAll(files **flast)
@@ -180,15 +239,13 @@ void sortAlph(files **flast)
 	files *sortFiles = slist.next;
 	while (pointer)
 	{
-		if ((pointer->file.attrib == _A_SUBDIR) || (pointer->file.attrib == 17) 
-			|| (pointer->file.attrib == 22)) addFiles(pointer->file, &sortFiles);
+		if (!pointer->file.size) addFiles(pointer->file, &sortFiles);
 		pointer = pointer->next;
 	}
 	pointer = *flast;
 	while (pointer)
 	{
-		if ((pointer->file.attrib != _A_SUBDIR) && (pointer->file.attrib != 17)
-			&& (pointer->file.attrib != 22)) addFiles(pointer->file, &sortFiles);
+		if (pointer->file.size) addFiles(pointer->file, &sortFiles);
 		pointer = pointer->next;
 	}
 	deleteAll(flast);
@@ -269,7 +326,7 @@ void RefreshFiles(files **flast, unsigned int *fCount, COORD ConsoleSize)
 {
 	deleteAll(flast);
 	searchFiles(flast, fCount);
-	show(*flast, ConsoleSize);
+	show(*flast, ConsoleSize, 0, FALSE);
 }
 void addLog(char *message)
 {
@@ -338,6 +395,9 @@ void ConsoleFrame(COORD ConsoleSize)
 
 	int main() 
 	{
+		//COORD ConsoleSize = { 122,40 };
+
+		SetConsoleTitle(L"File Manager");
 		COORD ConsoleSize = { 80,25 };
 		fLog = fopen("logfile.log", "w");
 		addLog("Программа запущена");
@@ -349,10 +409,10 @@ void ConsoleFrame(COORD ConsoleSize)
 		char buffer[260], fCopy[260];
 		ConsoleFrame(ConsoleSize);
 		setlocale(LC_ALL, "rus");
-		int choice = 1, CrntStr = 0, key;
+		int choice = 1, CrntStr = 0, key, CrntFile = 0;
 		files *flast = flist.next;
 		searchFiles(&flast, &fCount);
-		show(flast, ConsoleSize);
+		show(flast, ConsoleSize, 0,FALSE);
 		do
 		{
 			SelectStr(CrntStr);
@@ -360,73 +420,93 @@ void ConsoleFrame(COORD ConsoleSize)
 			if (key == 224)
 			{
 				key = _getch();
-				if ((key == 80) && (CrntStr < (fCount-1)))
+				if ((key == 80) && (CrntFile < (fCount-1)))
 				{
-					SetColor(Blue, White);
-					GetFileName(flast, buffer, CrntStr);
-					showStr(buffer, GetFileSize(flast, CrntStr), ConsoleSize.X);
-					CrntStr++;
-					SelectStr(CrntStr);
-					SetColor(Cyan, White);
-					GetFileName(flast, buffer, CrntStr);
-					showStr(buffer, GetFileSize(flast, CrntStr), ConsoleSize.X);
+					if (CrntStr+1 == (ConsoleSize.Y - 5))
+					{
+						show(flast, ConsoleSize, CrntFile - ConsoleSize.Y + 7, TRUE);
+						CrntFile++;
+					}
+					else 
+					{
+						SetColor(Blue, White);
+						GetFileName(flast, buffer, CrntFile);
+						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+						CrntStr++;
+						CrntFile++;
+						SelectStr(CrntStr);
+						SetColor(Cyan, White);
+						GetFileName(flast, buffer, CrntFile);
+						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+					}
 				}
-				if ((key == 72) && (CrntStr)) {
-					SetColor(Blue, White);
-					GetFileName(flast, buffer, CrntStr);
-					showStr(buffer, GetFileSize(flast, CrntStr), ConsoleSize.X);
-					CrntStr--;
-					SelectStr(CrntStr);
-					SetColor(Cyan, White);
-					GetFileName(flast, buffer, CrntStr);
-					showStr(buffer, GetFileSize(flast, CrntStr), ConsoleSize.X);
+				if ((key == 72) && (CrntFile)) {
+					if (!CrntStr)
+					{
+						show(flast, ConsoleSize, CrntFile-1, FALSE);
+						CrntFile--;
+					}
+					else
+					{
+						SetColor(Blue, White);
+						GetFileName(flast, buffer, CrntFile);
+						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+						CrntStr--;
+						CrntFile--;
+						SelectStr(CrntStr);
+						SetColor(Cyan, White);
+						GetFileName(flast, buffer, CrntFile);
+						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+					}
 				}
 				if (key == 83)
 				{
-					GetFileName(flast, buffer, CrntStr);
+					GetFileName(flast, buffer, CrntFile);
 					remove(buffer);
 					RefreshFiles(&flast, &fCount, ConsoleSize);
 					CrntStr = 0;
+					CrntFile = 0;
 				}
 				SelectStr(CrntStr);
 			}
-			if ((key == 13) && ((GetFileAttrib(flast, CrntStr) == _A_SUBDIR) 
-				|| (GetFileAttrib(flast, CrntStr) == 17) || (GetFileAttrib(flast, CrntStr) == 22)))
-			//if ((key == 13) && (GetFileAttrib(flast, CrntStr) != 32))
+			if ((key == 13) && (!GetFileSize(flast, CrntFile)))
 			{
-				GetFileName(flast, buffer, CrntStr);
+				GetFileName(flast, buffer, CrntFile);
 				_chdir(buffer);
 				RefreshFiles(&flast, &fCount, ConsoleSize);
 				CrntStr = 0;
+				CrntFile = 0;
 			}
 			if (key == 8)
 			{
 				_chdir("..");
 				RefreshFiles(&flast, &fCount, ConsoleSize);
 				CrntStr = 0;
+				CrntFile = 0;
 			}
 			if (key == 'c')
 			{
 				if (source != NULL) fclose(source);
-				GetFileName(flast, fCopy, CrntStr);
+				GetFileName(flast, fCopy, CrntFile);
 				source = fopen(fCopy, "r+b");
 				if (source != NULL)  addLog("Файл добавлен в буфер");
 				else addLog("Ошибка открытия файла");
 			}
 			if ((key == 'v') && (source != NULL))
 			{
-				GetFileName(flast, fCopy, CrntStr);
+				GetFileName(flast, fCopy, CrntFile);
 				dist = fopen(fCopy, "r+b");
 				if (dist != NULL)
 				{
 					fclose(dist);
 				}
-				GetFileName(flast, fCopy, CrntStr);
+				GetFileName(flast, fCopy, CrntFile);
 				dist = fopen(fCopy, "w+b");
 				FileCopy(source, dist);
 				fclose(dist);
 				RefreshFiles(&flast, &fCount, ConsoleSize);
 				CrntStr = 0;
+				CrntFile = 0;
 			}
 			
 
