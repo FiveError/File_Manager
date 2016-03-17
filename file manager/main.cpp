@@ -9,7 +9,7 @@
 #include <conio.h>
 #include <Windows.h>
 #include <direct.h>
-
+#include <ctime>
 using namespace std;
 FILE *fLog;
 struct files{
@@ -113,9 +113,9 @@ void showStr(char *FileName, _fsize_t FileSize, int x)
 		for (int i = 0; i < (5 * x / 6 - 1 - FileNameLen); i++)
 			printf(" ");
 	}
-	setlocale(LC_ALL, "C");
-	printf("%c", 179);
-	setlocale(LC_ALL, "rus");
+	//setlocale(LC_ALL, "C");
+	printf("%c", 166);  // 179 166
+	//setlocale(LC_ALL, "rus");
 	if (!FileSize)
 	{
 		printf("FOLDER");
@@ -259,11 +259,11 @@ void searchFiles(files **flast, unsigned int *a) // принимает два параметра: пут
 	*a = 0;
 	struct _finddata_t myfile;  intptr_t p;
 	p = _findfirst("*.*", &myfile); 
-	if (p != -1)
-	{
-		addFiles(myfile, flast);
-		(*a)++;
-	}
+	if ((p != -1) && (myfile.name[0] != '.') && (myfile.name[1] != '\0'))
+		{
+			addFiles(myfile, flast);
+			(*a)++;
+		}
 		while (_findnext(p, &myfile) != -1)
 		{
 			addFiles(myfile, flast);
@@ -328,9 +328,18 @@ void RefreshFiles(files **flast, unsigned int *fCount, COORD ConsoleSize)
 	searchFiles(flast, fCount);
 	show(*flast, ConsoleSize, 0, FALSE);
 }
-void addLog(char *message)
+void addLog(char *message, char  *typemessage)
 {
+	time_t timer;
+	char * timestring;
+	time(&timer);
+	timestring = asctime((localtime(&timer)));
 	int i;
+	for (i = 0; timestring[i]; ++i);
+	fwrite(timestring, i-1, sizeof(char), fLog);
+	fwrite(" ", 1, sizeof(char), fLog);
+	for (i = 0; typemessage[i]; ++i);
+	fwrite(typemessage, i+1, sizeof(char), fLog);
 	for (i = 0; message[i]; ++i);
 	fwrite(message, i+1, sizeof(char), fLog);
 	fwrite("\n", 1, sizeof(char), fLog);
@@ -362,10 +371,12 @@ void ConsoleFrame(COORD ConsoleSize)
 	for (int i = 0; i < ConsoleSize.Y; ++i)
 	{
 		printf("%c", 186);
-		for (int j = 0; j < (5 * ConsoleSize.X / 6 - 1); ++j)
+		/*for (int j = 0; j < (5 * ConsoleSize.X / 6 - 1); ++j)
 			printf(" ");
 		printf("%c", 179);
 		for (int j = 0; j < (ConsoleSize.X / 6); ++j)
+			printf(" ");*/
+		for (int j = 0; j < ConsoleSize.X; ++j)
 			printf(" ");
 		printf("%c", 186);
 	}
@@ -392,6 +403,17 @@ void ConsoleFrame(COORD ConsoleSize)
 
 
 }
+/*void RefreshStr(int CrntStr)
+{
+	PCHAR_INFO buffer;
+	PSMALL_RECT lpReadRegion;
+	COORD dwBufferSize{ 78,1 };
+	COORD dwBufferCoord{ 1, CrntStr + 2 };
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	ReadConsoleOutput(hConsole, buffer, dwBufferSize, dwBufferCoord, lpReadRegion);
+	SetColor(Blue, White);
+	WriteConsoleOutput(hConsole, buffer, dwBufferSize, dwBufferCoord, lpReadRegion);
+}*/
 
 	int main() 
 	{
@@ -400,7 +422,7 @@ void ConsoleFrame(COORD ConsoleSize)
 		SetConsoleTitle(L"File Manager");
 		COORD ConsoleSize = { 80,25 };
 		fLog = fopen("logfile.log", "w");
-		addLog("Программа запущена");
+		addLog("Программа запущена","INFO");
 		SetBufferSize(ConsoleSize);
 		DisableCursor();
 		_chdir("C:\\");
@@ -432,6 +454,7 @@ void ConsoleFrame(COORD ConsoleSize)
 						SetColor(Blue, White);
 						GetFileName(flast, buffer, CrntFile);
 						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+						//RefreshStr(CrntStr);
 						CrntStr++;
 						CrntFile++;
 						SelectStr(CrntStr);
@@ -489,8 +512,8 @@ void ConsoleFrame(COORD ConsoleSize)
 				if (source != NULL) fclose(source);
 				GetFileName(flast, fCopy, CrntFile);
 				source = fopen(fCopy, "r+b");
-				if (source != NULL)  addLog("Файл добавлен в буфер");
-				else addLog("Ошибка открытия файла");
+				if (source != NULL)  addLog("Файл добавлен в буфер","INFO");
+				else addLog("Ошибка открытия файла","ERROR");
 			}
 			if ((key == 'v') && (source != NULL))
 			{
@@ -513,7 +536,7 @@ void ConsoleFrame(COORD ConsoleSize)
 			SetColor(Blue, White);
 		} while (key != 27);
 		if (source != NULL) fclose(source);
-		addLog("Программа выключена");
+		addLog("Программа выключена","INFO");
 		fclose(fLog);
 		return 0;
 	}
