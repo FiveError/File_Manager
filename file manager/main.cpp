@@ -41,6 +41,144 @@ void DisableCursor()
 	CCI.dwSize = 1;
 	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CCI);
 }
+void readStringFromConsole(int CrnStr, COORD ConsoleSize, ConsoleColor a, ConsoleColor b)
+{
+	HANDLE hStdout;
+	SMALL_RECT srctReadRect;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[ConsoleSize.X - 2]; // [1][122]; 
+	COORD coordBufSize;
+	COORD coordBufCoord;												/*Чтение из консоли*/
+	BOOL fSuccess;
+
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	srctReadRect.Top = CrnStr + 2;    // top left: row 2, col 1 
+	srctReadRect.Left = 1;
+	srctReadRect.Bottom = CrnStr + 2; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X - 1;
+
+	// The temporary buffer size is 1 rows x 120 columns.
+
+	coordBufSize.Y = 1;
+	coordBufSize.X = ConsoleSize.X - 2;
+
+	// The top left destination cell of the temporary buffer is 
+	// row 0, col 0. 
+
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+
+	fSuccess = ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+
+	for (int i = 0; i < (ConsoleSize.X-2); i++) chiBuffer[i].Attributes = (WORD)((a << 4) | b);
+	fSuccess = WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+}
+void readBlockDown(COORD ConsoleSize)
+{
+	HANDLE hStdout;
+	SMALL_RECT srctReadRect;
+	int size = (ConsoleSize.Y - 6)*(ConsoleSize.X - 2);
+	CHAR_INFO *chiBuffer = new CHAR_INFO[size]; // [][122]; 
+	COORD coordBufSize;
+	COORD coordBufCoord;												/*Чтение из консоли*/
+	BOOL fSuccess;
+
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	srctReadRect.Top = 2;    // top left: row 2, col 1 
+	srctReadRect.Left = 1;
+	srctReadRect.Bottom = ConsoleSize.Y - 4; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X - 1;
+
+	// The temporary buffer size is 1 rows x 120 columns.
+
+	coordBufSize.Y = ConsoleSize.Y - 6;
+	coordBufSize.X = ConsoleSize.X - 2;
+
+	// The top left destination cell of the temporary buffer is 
+	// row 0, col 0. 
+
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+
+	fSuccess = ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+
+	srctReadRect.Top = 3;    // top left: row 2, col 1 
+	srctReadRect.Left = 1;
+	srctReadRect.Bottom = ConsoleSize.Y - 3; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X - 1;
+
+	for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
+	fSuccess = WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+}
+void readBlockUp(COORD ConsoleSize)
+{
+	HANDLE hStdout;
+	SMALL_RECT srctReadRect;
+	int size = (ConsoleSize.Y - 6)*(ConsoleSize.X - 2);
+	CHAR_INFO *chiBuffer = new CHAR_INFO[size]; // [][122]; 
+	COORD coordBufSize;
+	COORD coordBufCoord;												/*Чтение из консоли*/
+	BOOL fSuccess;
+
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	srctReadRect.Top = 3;    // top left: row 2, col 1 
+	srctReadRect.Left = 1;
+	srctReadRect.Bottom = ConsoleSize.Y - 3; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X - 1;
+
+	// The temporary buffer size is 1 rows x 120 columns.
+
+	coordBufSize.Y = ConsoleSize.Y - 6;
+	coordBufSize.X = ConsoleSize.X - 2;
+
+	// The top left destination cell of the temporary buffer is 
+	// row 0, col 0. 
+
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+
+	fSuccess = ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+
+	srctReadRect.Top = 2;    // top left: row 2, col 1 
+	srctReadRect.Left = 1;
+	srctReadRect.Bottom = ConsoleSize.Y - 4; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X - 1;
+
+	for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[size-i-1].Attributes = (WORD)((Blue << 4) | White);
+	fSuccess = WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+}
 void SetBufferSize(COORD BufferSize)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -150,7 +288,7 @@ void showClearStr(int x)
 	for (int i = 0; i < (5 * x / 6 - 1); i++)
 		printf(" ");
 	//setlocale(LC_ALL, "C");
-	printf("%c", 179);      //166
+	printf("%c", 166);      //179
 	//setlocale(LC_ALL, "rus");
 	for (int i = 0; i < (x / 6); i++)
 		printf(" ");
@@ -210,27 +348,6 @@ void deleteAll(files **flast)
 	}
 	*flast = NULL;
 }
-/*void SortAlphWRONG!!!(files *flast)
-{
-	files *pointer = flast;
-	files *sortFiles = slist.next;
-	while (pointer->next) pointer = pointer->next;
-	while (pointer->prev)
-	{
-		if (pointer->file.attrib == _A_SUBDIR)
-			addFiles(pointer->file, &sortFiles);
-		pointer = pointer->prev;
-	}
-	while (pointer->next) pointer = pointer->next;
-	while (pointer->prev)
-	{
-		if (pointer->file.attrib != _A_SUBDIR)
-			addFiles(pointer->file, &sortFiles);
-		pointer = pointer->prev;
-	}
-	flast = sortFiles;
-	deleteAll(&sortFiles);
-}*/
 void sortAlph(files **flast)
 {
 	files *pointer = *flast;
@@ -289,16 +406,6 @@ int GetFileAttrib(files *flast, int CrntStr)
 	a = flast->file.attrib;
 	return a;
 }
-/*bool CheckFile(files *flast, char *fCheck, unsigned int fCount)
-{
-	for (int i = 0; i < fCount; ++i)
-	{
-
-		flast = flast->next;
-	}
-
-	
-}*/
 void FileCopy(FILE *source, FILE *dist)
 {
 	unsigned int fsize, n;
@@ -412,17 +519,6 @@ void ConsoleFrame(COORD ConsoleSize)
 
 
 }
-/*void RefreshStr(int CrntStr)
-{
-	PCHAR_INFO buffer;
-	PSMALL_RECT lpReadRegion;
-	COORD dwBufferSize{ 78,1 };
-	COORD dwBufferCoord{ 1, CrntStr + 2 };
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	ReadConsoleOutput(hConsole, buffer, dwBufferSize, dwBufferCoord, lpReadRegion);
-	SetColor(Blue, White);
-	WriteConsoleOutput(hConsole, buffer, dwBufferSize, dwBufferCoord, lpReadRegion);
-}*/
 void getLogPath(const char *argv[])
 {
 	int i;
@@ -436,10 +532,9 @@ void getLogPath(const char *argv[])
 	int main(int argc, const char * argv[]) 
 	{
 		getLogPath(argv);
-		//GetFullPathName(L"logfile.log", MAX_PATH, logPath, NULL);
-		COORD ConsoleSize = { 122,40 };
+		//COORD ConsoleSize = { 122,40 };
 		SetConsoleTitle(L"File Manager");
-		//COORD ConsoleSize = { 80,25 };
+		COORD ConsoleSize = { 80,25 };
 		addLog("Программа запущена","INFO");
 		SetBufferSize(ConsoleSize);
 		DisableCursor();
@@ -460,49 +555,47 @@ void getLogPath(const char *argv[])
 			if (key == 224)
 			{
 				key = _getch();
-				if ((key == 80) && (CrntFile < (fCount-1)))
+				if ((key == 80) && (CrntFile < (fCount - 1)))
 				{
-					if (CrntStr+1 == (ConsoleSize.Y - 5))
+					if (CrntStr + 1 == (ConsoleSize.Y - 5))
 					{
-						show(flast, ConsoleSize, CrntFile - ConsoleSize.Y + 7, TRUE);
+						readBlockUp(ConsoleSize);
 						CrntFile++;
-					}
-					else 
-					{
-						SetColor(Blue, White);
 						GetFileName(flast, buffer, CrntFile);
+						SetColor(Cyan, White);
 						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
-						//RefreshStr(CrntStr);
+					}
+					else
+					{
+						readStringFromConsole(CrntStr, ConsoleSize, Blue, White);
 						CrntStr++;
 						CrntFile++;
-						SelectStr(CrntStr);	
-						SetColor(Cyan, White);
-						GetFileName(flast, buffer, CrntFile);
-						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+						SelectStr(CrntStr);
+						readStringFromConsole(CrntStr, ConsoleSize, Cyan, White);
 					}
 				}
 				if ((key == 72) && (CrntFile)) {
 					if (!CrntStr)
 					{
-						show(flast, ConsoleSize, CrntFile-1, FALSE);
+						//show(flast, ConsoleSize, CrntFile - 1, FALSE);
+						readBlockDown(ConsoleSize);
 						CrntFile--;
+						GetFileName(flast, buffer, CrntFile);
+						SetColor(Cyan, White);
+						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
 					}
 					else
 					{
-						SetColor(Blue, White);
-						GetFileName(flast, buffer, CrntFile);
-						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+						readStringFromConsole(CrntStr, ConsoleSize, Blue, White);
 						CrntStr--;
 						CrntFile--;
 						SelectStr(CrntStr);
-						SetColor(Cyan, White);
-						GetFileName(flast, buffer, CrntFile);
-						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+						readStringFromConsole(CrntStr, ConsoleSize, Cyan, White);
 					}
 				}
 				if (key == 83)
 				{
-					//GetFileName(flast, buffer, CrntFile);
+					GetFileName(flast, buffer, CrntFile);
 					remove(buffer);
 					RefreshFiles(&flast, &fCount, ConsoleSize);
 					CrntStr = 0;
