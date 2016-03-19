@@ -10,6 +10,7 @@
 #include <chrono>
 using namespace std;
 char *logFile;
+COORD ConsoleSize = { 122,40 };
 struct files{
 	_finddata_t file;
 	files *prev;
@@ -41,7 +42,18 @@ void DisableCursor()
 	CCI.dwSize = 1;
 	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CCI);
 }
-void readStringFromConsole(int CrnStr, COORD ConsoleSize, ConsoleColor a, ConsoleColor b)
+void SetColor(ConsoleColor a, ConsoleColor b)
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hConsole, (WORD)((a << 4) | b));
+}
+void SetCursorPosition(short x, short y)
+{
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD position = { x,y };
+	SetConsoleCursorPosition(hConsole, position);
+}
+void readStringFromConsole(int CrnStr, ConsoleColor a, ConsoleColor b)
 {
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect;
@@ -83,7 +95,7 @@ void readStringFromConsole(int CrnStr, COORD ConsoleSize, ConsoleColor a, Consol
 		&srctReadRect);  // dest. screen buffer rectangle 
 	delete[] chiBuffer;
 }
-void readBlockDown(COORD ConsoleSize)
+void readBlockDown()
 {
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect;
@@ -131,7 +143,7 @@ void readBlockDown(COORD ConsoleSize)
 		&srctReadRect);  // dest. screen buffer rectangle 
 	delete[] chiBuffer;
 }
-void readBlockUp(COORD ConsoleSize)
+void readBlockUp()
 {
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect;
@@ -179,17 +191,101 @@ void readBlockUp(COORD ConsoleSize)
 		&srctReadRect);  // dest. screen buffer rectangle 
 	delete[] chiBuffer;
 }
-void SetBufferSize(COORD BufferSize)
+void WindowFrame(short top, short left, short bottom, short right, ConsoleColor background)
 {
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	SMALL_RECT src = { 0, 0, BufferSize.X-1, BufferSize.Y-1 };
-	SetConsoleScreenBufferSize(hConsole, BufferSize);
-	SetConsoleWindowInfo(hConsole, TRUE, &src);
+	setlocale(LC_CTYPE, "C");
+	SetColor(background, White);
+	SetCursorPosition(left, top);
+	printf("%c", 201);
+	for (int i = 0; i < (right - left - 2); ++i)
+		printf("%c", 205);
+	printf("%c", 187);
+	for (short j = 0; j < (bottom - top - 2); ++j)
+	{
+		SetCursorPosition(left, top + j + 1);
+		printf("%c", 186);
+		for (int i = 0; i < (right - left - 2); ++i)
+			printf(" ");
+		printf("%c", 186);
+	}
+	SetCursorPosition(left, bottom - 1);
+	printf("%c", 200);
+	for (int i = 0; i < (right - left - 2); ++i)
+		printf("%c", 205);
+	printf("%c", 188);
+	setlocale(LC_CTYPE, "rus");
 }
-void SetColor(ConsoleColor a, ConsoleColor b)
+void showWindow(CHAR_INFO **chiBuffer, short top, short left, short bottom, short right, ConsoleColor background)
+{
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD coordBufSize;
+	coordBufSize.Y = bottom - top;
+	coordBufSize.X = right - left;
+	SMALL_RECT srctReadRect;
+	srctReadRect.Bottom = bottom;
+	srctReadRect.Left = left;
+	srctReadRect.Right = right;
+	srctReadRect.Top = top;
+	COORD coordBufCoord;				
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	BOOL fSuccess;
+	fSuccess = ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		*chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+	WindowFrame(top, left, bottom, right, background);
+}
+void hideWindow(CHAR_INFO *chiBuffer, short top, short left, short bottom, short right)
+{
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD coordBufSize;
+	coordBufSize.Y = bottom - top;
+	coordBufSize.X = right - left;
+	SMALL_RECT srctReadRect;
+	srctReadRect.Bottom = bottom;
+	srctReadRect.Left = left;
+	srctReadRect.Right = right;
+	srctReadRect.Top = top;
+	COORD coordBufCoord;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	BOOL fSuccess;
+	fSuccess = WriteConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+}
+void showError(char *buffer1, char *buffer2)
+{
+	short top = ConsoleSize.Y / 2 - 4;
+	short bottom = ConsoleSize.Y / 2 + 3;
+	short left = ConsoleSize.X / 2 - 31;
+	short right = ConsoleSize.X / 2 + 31;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[7 * 62];
+	showWindow(&chiBuffer, top, left, bottom, right, Red);
+	SetCursorPosition(left + 28, top + 1);
+	printf("ERROR!");
+	SetCursorPosition(left + 2, top + 2);
+	printf("%s", buffer1);
+	SetCursorPosition(left + 2, top + 3);
+	printf("%s", buffer2);
+	SetCursorPosition(left + 2, top + 5);
+	printf("Нажмите на любую клавишу...");
+	_getch();
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+}
+void SetBufferSize()
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	SetConsoleTextAttribute(hConsole, (WORD)((a << 4) | b));
+	SMALL_RECT src = { 0, 0, ConsoleSize.X-1, ConsoleSize.Y-1 };
+	SetConsoleScreenBufferSize(hConsole, ConsoleSize);
+	SetConsoleWindowInfo(hConsole, TRUE, &src);
 }
 void SelectStr(int a)
 {
@@ -217,15 +313,6 @@ void add(_finddata_t a, files **b)
 	files *adding = new files;
 	adding->file = a;
 	adding->prev = NULL;
-	/*files *last = *b;
-	adding->next = NULL;
-	if (last)                //Список в правильном порядке
-	{
-		while (last->next) last = last->next;
-		last->next = adding;
-	}
-	else
-		**b = adding; */
 	adding->next = *b;     //Список в обратном порядке
 	*b = adding;
 	if ((adding->next)) (*b)->next->prev = adding;
@@ -243,7 +330,6 @@ void showStr(char *FileName, _fsize_t FileSize, int x)
 	}
 	else
 	{
-		//printf("%s", FileName);
 		for (int i = 0; FileName[i]; i++)
 			printf("%c", FileName[i]);
 		for (int i = 0; i < (5 * x / 6 - 1 - FileNameLen); i++)
@@ -287,13 +373,11 @@ void showClearStr(int x)
 	x -= 2;
 	for (int i = 0; i < (5 * x / 6 - 1); i++)
 		printf(" ");
-	//setlocale(LC_ALL, "C");
 	printf("%c", 166);      //179
-	//setlocale(LC_ALL, "rus");
 	for (int i = 0; i < (x / 6); i++)
 		printf(" ");
 }
-void show(files *first, COORD ConsoleSize, int a, bool b)	
+void show(files *first, int a, bool b)	
 {
 	files *showing = first;
 	for (int i = 0; i < a; i++) showing = showing->next;
@@ -427,11 +511,11 @@ void FileCopy(FILE *source, FILE *dist)
 	fwrite(buffer, ost, sizeof(char), dist);
 	delete[] buffer;
 }
-void RefreshFiles(files **flast, unsigned int *fCount, COORD ConsoleSize)
+void RefreshFiles(files **flast, unsigned int *fCount)
 {
 	deleteAll(flast);
 	searchFiles(flast, fCount);
-	show(*flast, ConsoleSize, 0, FALSE);
+	show(*flast, 0, FALSE);
 }
 void addLog(char *message, char  *typemessage)
 {
@@ -460,7 +544,7 @@ void addLog(char *message, char  *typemessage)
 	fwrite("\n", 1, sizeof(char), fLog);
 	fclose(fLog);
 }
-void ConsoleFrame(COORD ConsoleSize)
+void ConsoleFrame()
 {
 	SetColor(Blue, White);
 	ConsoleSize.X -= 2;
@@ -503,6 +587,8 @@ void ConsoleFrame(COORD ConsoleSize)
 	for (int i = 0; i < (ConsoleSize.X / 6); ++i)
 		printf("%c", 205);
 	printf("%c", 188);
+	ConsoleSize.X += 2;
+	ConsoleSize.Y += 5;
 	printf("\n");
 	SetColor(Red, White);
 	printf("F1-HELP");
@@ -528,26 +614,54 @@ void getLogPath(const char *argv[])
 	memcpy(logFile, argv[0], i-12);
 	memcpy(logFile+i-12, "logFile.log", 12);
 }
+void ExistFile(char (*str)[260])
+{
+	int i;
+	for (i = 0; (*str)[i]; ++i);
+	if (i > 256)
+	{
+		showError("Файл с таким именем уже существует", "и его имя слишком длинное");
+		return;
+	}
+	int k = i;
+	for (; (*str)[k] != '.'; --k);
+	char *str1 = new char[k + 2];
+	char *str2 = new char[i - k + 2];
+	memcpy(str1, *str, k);
+	str1[k] = '\0';
+	memcpy(str2, (*str) + k, i - k);
+	str2[i - k] = '\0';
+	i = 1;
+	FILE *f;
+	while (1)
+	{
+		sprintf(*str, "%s(%d)%s", str1, i, str2);
+		f = fopen(*str, "r");
+		if (!f) break;
+		fclose(f);
+		i++;
+	}
+	delete[] str1;
+	delete[] str2;
+}
 
 	int main(int argc, const char * argv[]) 
 	{
-		getLogPath(argv);
-		//COORD ConsoleSize = { 122,40 };
+		getLogPath(argv);	
 		SetConsoleTitle(L"File Manager");
-		COORD ConsoleSize = { 80,25 };
 		addLog("Программа запущена","INFO");
-		SetBufferSize(ConsoleSize);
+		SetBufferSize();
 		DisableCursor();
 		_chdir("C:\\");
 		FILE *source = NULL, *dist;
 		unsigned int fCount;
 		char buffer[260], fCopy[260];
-		ConsoleFrame(ConsoleSize);
+		ConsoleFrame();
 		setlocale(LC_ALL, "rus");
 		int CrntStr = 0, key, CrntFile = 0;
 		files *flast = flist.next;
 		searchFiles(&flast, &fCount);
-		show(flast, ConsoleSize, 0,FALSE);
+		show(flast, 0,FALSE);
 		do
 		{
 			SelectStr(CrntStr);
@@ -559,7 +673,7 @@ void getLogPath(const char *argv[])
 				{
 					if (CrntStr + 1 == (ConsoleSize.Y - 5))
 					{
-						readBlockUp(ConsoleSize);
+						readBlockUp();
 						CrntFile++;
 						GetFileName(flast, buffer, CrntFile);
 						SetColor(Cyan, White);
@@ -567,18 +681,18 @@ void getLogPath(const char *argv[])
 					}
 					else
 					{
-						readStringFromConsole(CrntStr, ConsoleSize, Blue, White);
+						readStringFromConsole(CrntStr, Blue, White);
 						CrntStr++;
 						CrntFile++;
 						SelectStr(CrntStr);
-						readStringFromConsole(CrntStr, ConsoleSize, Cyan, White);
+						readStringFromConsole(CrntStr, Cyan, White);
 					}
 				}
 				if ((key == 72) && (CrntFile)) {
 					if (!CrntStr)
 					{
 						//show(flast, ConsoleSize, CrntFile - 1, FALSE);
-						readBlockDown(ConsoleSize);
+						readBlockDown();
 						CrntFile--;
 						GetFileName(flast, buffer, CrntFile);
 						SetColor(Cyan, White);
@@ -586,18 +700,18 @@ void getLogPath(const char *argv[])
 					}
 					else
 					{
-						readStringFromConsole(CrntStr, ConsoleSize, Blue, White);
+						readStringFromConsole(CrntStr, Blue, White);
 						CrntStr--;
 						CrntFile--;
 						SelectStr(CrntStr);
-						readStringFromConsole(CrntStr, ConsoleSize, Cyan, White);
+						readStringFromConsole(CrntStr, Cyan, White);
 					}
 				}
 				if (key == 83)
 				{
 					GetFileName(flast, buffer, CrntFile);
 					remove(buffer);
-					RefreshFiles(&flast, &fCount, ConsoleSize);
+					RefreshFiles(&flast, &fCount);
 					CrntStr = 0;
 					CrntFile = 0;
 				}
@@ -607,14 +721,14 @@ void getLogPath(const char *argv[])
 			{
 				GetFileName(flast, buffer, CrntFile);
 				_chdir(buffer);
-				RefreshFiles(&flast, &fCount, ConsoleSize);
+				RefreshFiles(&flast, &fCount);
 				CrntStr = 0;
 				CrntFile = 0;
 			}
 			if (key == 8)
 			{
 				_chdir("..");
-				RefreshFiles(&flast, &fCount, ConsoleSize);
+				RefreshFiles(&flast, &fCount);
 				CrntStr = 0;
 				CrntFile = 0;
 			}
@@ -629,19 +743,24 @@ void getLogPath(const char *argv[])
 			}
 			if ((key == 'v') && (source != NULL))
 			{
-				//GetFileName(flast, fCopy, CrntFile);
 				dist = fopen(fCopy, "r+b");
+				memcpy(buffer, fCopy, 260);
 				if (dist != NULL)
 				{
 					fclose(dist);
+					ExistFile(&fCopy);
 				}
-				//GetFileName(flast, fCopy, CrntFile);
 				dist = fopen(fCopy, "w+b");
 				FileCopy(source, dist);
 				fclose(dist);
-				RefreshFiles(&flast, &fCount, ConsoleSize);
+				RefreshFiles(&flast, &fCount);
 				CrntStr = 0;
 				CrntFile = 0;
+				memcpy(fCopy, buffer, 260);
+			}
+			if (key == 'e')
+			{
+				showError("Вы нажали не на ту клавишу", "О БОЖЕ!!!");
 			}
 			SetColor(Blue, White);
 		} while (key != 27);
