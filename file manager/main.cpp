@@ -1,7 +1,3 @@
-
-
-
-	
 #include <stdio.h> 
 #include <stdlib.h>
 #include <io.h>  
@@ -10,8 +6,10 @@
 #include <Windows.h>
 #include <direct.h>
 #include <ctime>
+#include <thread>
+#include <chrono>
 using namespace std;
-FILE *fLog;
+char *logFile;
 struct files{
 	_finddata_t file;
 	files *prev;
@@ -151,9 +149,9 @@ void showClearStr(int x)
 	x -= 2;
 	for (int i = 0; i < (5 * x / 6 - 1); i++)
 		printf(" ");
-	setlocale(LC_ALL, "C");
-	printf("%c", 179);
-	setlocale(LC_ALL, "rus");
+	//setlocale(LC_ALL, "C");
+	printf("%c", 179);      //166
+	//setlocale(LC_ALL, "rus");
 	for (int i = 0; i < (x / 6); i++)
 		printf(" ");
 }
@@ -330,6 +328,16 @@ void RefreshFiles(files **flast, unsigned int *fCount, COORD ConsoleSize)
 }
 void addLog(char *message, char  *typemessage)
 {
+	FILE *fLog;
+	if (message != "Программа запущена")
+		for (int j = 0; j < 20; j++)
+		{
+			fLog = fopen(logFile, "a");
+			if (fLog) break;
+			this_thread::sleep_for(chrono::milliseconds(20));
+		}
+	else fLog = fopen(logFile, "w");
+	if (!fLog) return;
 	time_t timer;
 	char * timestring;
 	time(&timer);
@@ -343,6 +351,7 @@ void addLog(char *message, char  *typemessage)
 	for (i = 0; message[i]; ++i);
 	fwrite(message, i+1, sizeof(char), fLog);
 	fwrite("\n", 1, sizeof(char), fLog);
+	fclose(fLog);
 }
 void ConsoleFrame(COORD ConsoleSize)
 {
@@ -414,14 +423,23 @@ void ConsoleFrame(COORD ConsoleSize)
 	SetColor(Blue, White);
 	WriteConsoleOutput(hConsole, buffer, dwBufferSize, dwBufferCoord, lpReadRegion);
 }*/
+void getLogPath(const char *argv[])
+{
+	int i;
+	for (i = 0; argv[0][i]; ++i);
+	i -= 4;
+	logFile = new char[i];
+	memcpy(logFile, argv[0], i-12);
+	memcpy(logFile+i-12, "logFile.log", 12);
+}
 
-	int main() 
+	int main(int argc, const char * argv[]) 
 	{
-		//COORD ConsoleSize = { 122,40 };
-
+		getLogPath(argv);
+		//GetFullPathName(L"logfile.log", MAX_PATH, logPath, NULL);
+		COORD ConsoleSize = { 122,40 };
 		SetConsoleTitle(L"File Manager");
-		COORD ConsoleSize = { 80,25 };
-		fLog = fopen("logfile.log", "w");
+		//COORD ConsoleSize = { 80,25 };
 		addLog("Программа запущена","INFO");
 		SetBufferSize(ConsoleSize);
 		DisableCursor();
@@ -431,7 +449,7 @@ void ConsoleFrame(COORD ConsoleSize)
 		char buffer[260], fCopy[260];
 		ConsoleFrame(ConsoleSize);
 		setlocale(LC_ALL, "rus");
-		int choice = 1, CrntStr = 0, key, CrntFile = 0;
+		int CrntStr = 0, key, CrntFile = 0;
 		files *flast = flist.next;
 		searchFiles(&flast, &fCount);
 		show(flast, ConsoleSize, 0,FALSE);
@@ -457,7 +475,7 @@ void ConsoleFrame(COORD ConsoleSize)
 						//RefreshStr(CrntStr);
 						CrntStr++;
 						CrntFile++;
-						SelectStr(CrntStr);
+						SelectStr(CrntStr);	
 						SetColor(Cyan, White);
 						GetFileName(flast, buffer, CrntFile);
 						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
@@ -484,7 +502,7 @@ void ConsoleFrame(COORD ConsoleSize)
 				}
 				if (key == 83)
 				{
-					GetFileName(flast, buffer, CrntFile);
+					//GetFileName(flast, buffer, CrntFile);
 					remove(buffer);
 					RefreshFiles(&flast, &fCount, ConsoleSize);
 					CrntStr = 0;
@@ -511,19 +529,20 @@ void ConsoleFrame(COORD ConsoleSize)
 			{
 				if (source != NULL) fclose(source);
 				GetFileName(flast, fCopy, CrntFile);
+				//memcpy(fCopy, buffer, 260);
 				source = fopen(fCopy, "r+b");
 				if (source != NULL)  addLog("Файл добавлен в буфер","INFO");
 				else addLog("Ошибка открытия файла","ERROR");
 			}
 			if ((key == 'v') && (source != NULL))
 			{
-				GetFileName(flast, fCopy, CrntFile);
+				//GetFileName(flast, fCopy, CrntFile);
 				dist = fopen(fCopy, "r+b");
 				if (dist != NULL)
 				{
 					fclose(dist);
 				}
-				GetFileName(flast, fCopy, CrntFile);
+				//GetFileName(flast, fCopy, CrntFile);
 				dist = fopen(fCopy, "w+b");
 				FileCopy(source, dist);
 				fclose(dist);
@@ -531,12 +550,10 @@ void ConsoleFrame(COORD ConsoleSize)
 				CrntStr = 0;
 				CrntFile = 0;
 			}
-			
-
 			SetColor(Blue, White);
 		} while (key != 27);
 		if (source != NULL) fclose(source);
 		addLog("Программа выключена","INFO");
-		fclose(fLog);
+		delete[] logFile;
 		return 0;
 	}
