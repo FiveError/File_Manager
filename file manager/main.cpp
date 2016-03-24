@@ -644,6 +644,29 @@ void ExistFile(char (*str)[260])
 	delete[] str1;
 	delete[] str2;
 }
+void newFolder()
+{
+	char str[25];
+	int i = 1;
+	char str1[] = "Новая папка";
+	if (_chdir(str1))
+	{
+		_mkdir(str1);
+		return;
+	}
+	_chdir("..");
+	while (1)
+	{
+		sprintf(str, "%s(%d)", str1, i);
+		if (_chdir(str))
+		{
+			_mkdir(str);
+			return;
+		}
+		_chdir("..");
+		i++;
+	}
+}
 void deleteFolder(char *path)
 {
 	int error;
@@ -729,7 +752,6 @@ void deleteFolder(char *path)
 				if ((key == 72) && (CrntFile)) {
 					if (!CrntStr)
 					{
-						//show(flast, ConsoleSize, CrntFile - 1, FALSE);
 						readBlockDown();
 						CrntFile--;
 						GetFileName(flast, buffer, CrntFile);
@@ -748,11 +770,15 @@ void deleteFolder(char *path)
 				if (key == 83)
 				{
 					GetFileName(flast, buffer, CrntFile);
-					if (GetFileAttrib(flast, CrntFile) & _A_SUBDIR) deleteFolder(buffer); //удаление папки
-					else remove(buffer); //удаление файла
-					RefreshFiles(&flast, &fCount);
-					CrntStr = 0;
-					CrntFile = 0;
+					if ((buffer[0] == '.') && (buffer[1] == '.') && (buffer[2] == '\0')) showError("Путь назад невозможно удалить","");
+					else
+					{
+						if (GetFileAttrib(flast, CrntFile) & _A_SUBDIR) deleteFolder(buffer); //удаление папки
+						else remove(buffer); //удаление файла
+						RefreshFiles(&flast, &fCount);
+						CrntStr = 0;
+						CrntFile = 0;
+					}
 				}
 				SelectStr(CrntStr);
 			}
@@ -801,6 +827,13 @@ void deleteFolder(char *path)
 			{
 				showError("Вы нажали не на ту клавишу", "О БОЖЕ!!!");
 			}
+			if (key == 't')
+			{
+				newFolder();
+				RefreshFiles(&flast, &fCount);
+				CrntStr = 0;
+				CrntFile = 0;
+				}
 			SetColor(Blue, White);
 		} while (key != 27);
 		if (source != NULL) fclose(source);
