@@ -317,7 +317,7 @@ void add(_finddata_t a, files **b)
 	*b = adding;
 	if ((adding->next)) (*b)->next->prev = adding;
 }
-void showStr(char *FileName, _fsize_t FileSize, int x)
+void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x)
 {
 	x -= 2;
 	int FileNameLen;
@@ -338,7 +338,7 @@ void showStr(char *FileName, _fsize_t FileSize, int x)
 	//setlocale(LC_ALL, "C");
 	printf("%c", 166);  // 179 166
 	//setlocale(LC_ALL, "rus");
-	if (!FileSize)
+	if (attrib & _A_SUBDIR)
 	{
 		printf("FOLDER");
 		for (int i = 0; i < x / 6 - 6; i++)
@@ -386,14 +386,14 @@ void show(files *first, int a, bool b)
 	{
 		SetColor(Cyan, White);
 		SelectStr(ConsoleSize.Y - 5 - i);
-		showStr(showing->file.name, showing->file.size, ConsoleSize.X);
+		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
 		showing = showing->next;
 		i--;
 		SetColor(Blue, White);
 		while ((showing && i))
 		{
 			SelectStr(ConsoleSize.Y - 5 - i);
-			showStr(showing->file.name, showing->file.size, ConsoleSize.X);
+			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
 			showing = showing->next;
 			i--;
 		}
@@ -404,13 +404,13 @@ void show(files *first, int a, bool b)
 		while ((showing && i-1))
 		{
 			SelectStr(ConsoleSize.Y - 5 - i);
-			showStr(showing->file.name, showing->file.size, ConsoleSize.X);
+			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
 			showing = showing->next;
 			i--;
 		}
 		SetColor(Cyan, White);
 		SelectStr(ConsoleSize.Y - 5 - i);
-		showStr(showing->file.name, showing->file.size, ConsoleSize.X);
+		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
 		i--;
 	}
 	if (i) for (; i > 0; i--)
@@ -483,9 +483,9 @@ _fsize_t GetFileSize(files *flast, int CrntStr)
 	a = flast->file.size;
 	return a;
 }
-int GetFileAttrib(files *flast, int CrntStr)
+unsigned int GetFileAttrib(files *flast, int CrntStr)
 {
-	int a;
+	unsigned int a;
 	for (; CrntStr > 0; --CrntStr) flast = flast->next;
 	a = flast->file.attrib;
 	return a;
@@ -549,7 +549,7 @@ void ConsoleFrame()
 	SetColor(Blue, White);
 	ConsoleSize.X -= 2;
 	printf("%c", 201);
-	for (int i = 0; i < (5 * ConsoleSize.X / 6-1); ++i)
+	for (int i = 0; i < (5 * ConsoleSize.X / 6 - 1); ++i)
 		printf("%c", 205);
 	printf("%c", 209);
 	for (int i = 0; i < (ConsoleSize.X / 6); ++i)
@@ -644,6 +644,44 @@ void ExistFile(char (*str)[260])
 	delete[] str1;
 	delete[] str2;
 }
+void deleteFolder(char *path)
+{
+	int error;
+	errno = 0;
+	error = _rmdir(path);
+	if (error == -1)
+	{
+		switch (errno)
+		{
+		case EACCES:
+			showError("У вас не прав к удалению данной папки", "");
+			break;
+		case EBUSY:
+			showError("Данная папка открыта", "Закройте ее для удаления");
+			break;
+		case 41:
+			_chdir(path);
+			do
+			{
+				_finddata_t myfile;  intptr_t p;
+				p = _findfirst("*.*", &myfile);
+				_findnext(p, &myfile);
+				_findnext(p, &myfile);
+				_findclose(p);
+				if ((myfile.name[0] == '.')  && (myfile.name[1] == '.') &&(myfile.name[2] == '\0')) break;
+				if (myfile.attrib & _A_SUBDIR) deleteFolder(myfile.name);
+				else remove(myfile.name);
+			} while (1);
+			_chdir("..");
+			_rmdir(path);
+			break;
+		default:
+			break;
+		}
+	
+	}
+
+}
 
 	int main(int argc, const char * argv[]) 
 	{
@@ -677,7 +715,7 @@ void ExistFile(char (*str)[260])
 						CrntFile++;
 						GetFileName(flast, buffer, CrntFile);
 						SetColor(Cyan, White);
-						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+						showStr(buffer, GetFileSize(flast, CrntFile), GetFileAttrib(flast, CrntFile), ConsoleSize.X);
 					}
 					else
 					{
@@ -696,7 +734,7 @@ void ExistFile(char (*str)[260])
 						CrntFile--;
 						GetFileName(flast, buffer, CrntFile);
 						SetColor(Cyan, White);
-						showStr(buffer, GetFileSize(flast, CrntFile), ConsoleSize.X);
+						showStr(buffer, GetFileSize(flast, CrntFile), GetFileAttrib(flast, CrntFile), ConsoleSize.X);
 					}
 					else
 					{
@@ -710,7 +748,8 @@ void ExistFile(char (*str)[260])
 				if (key == 83)
 				{
 					GetFileName(flast, buffer, CrntFile);
-					remove(buffer);
+					if (GetFileAttrib(flast, CrntFile) & _A_SUBDIR) deleteFolder(buffer); //удаление папки
+					else remove(buffer); //удаление файла
 					RefreshFiles(&flast, &fCount);
 					CrntStr = 0;
 					CrntFile = 0;
