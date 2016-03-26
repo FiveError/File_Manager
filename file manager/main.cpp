@@ -705,6 +705,85 @@ void deleteFolder(char *path)
 	}
 
 }
+void FolderCopy(char *path, char *fCopy)
+{
+	_mkdir(fCopy);
+	_chdir(fCopy);
+	_finddata_t myfile;  intptr_t p;
+	int k1, k2;
+	FILE *source, *dist;
+	for (k1 = 0; path[k1]; ++k1);
+	char *pathCopy = new char[k1 + 5];
+	sprintf(pathCopy, "%s\\*.*", path);
+	p = _findfirst(pathCopy, &myfile);
+	delete[] pathCopy;
+	_findnext(p, &myfile);
+	while (_findnext(p, &myfile) != -1)
+	{
+		for (k2 = 0; myfile.name[k2]; ++k2);
+		pathCopy = new char[k1 + k2 + 2];
+		sprintf(pathCopy, "%s\\%s", path, myfile.name);
+		if (myfile.attrib & _A_SUBDIR) FolderCopy(pathCopy, myfile.name);
+		else {
+			source = fopen(pathCopy, "r+b");
+			if (source != NULL)
+			{
+				dist = fopen(myfile.name, "w+b");
+				FileCopy(source, dist);
+				fclose(source);
+				fclose(dist);
+			}
+			else showError(myfile.name, "Данный файл не может быть скопирован");
+		}
+		delete[] pathCopy;
+	}
+	_findclose(p);
+	_chdir("..");
+}
+void runHEX(char *FileName)
+{
+	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * 25];
+	short top = ConsoleSize.Y / 2 - 13;
+	short bottom = ConsoleSize.Y / 2 + 12;
+	short left = ConsoleSize.X / 2 - 40;
+	short right = ConsoleSize.X / 2 + 40;
+	showWindow(&chiBuffer, top, left, bottom, right, Magenta);
+	FILE *fHex;
+	unsigned char c;
+	fHex = fopen(FileName, "r+b");
+	SetCursorPosition(left + 11, top + 1);
+	SetColor(Magenta, Yellow);
+	for (unsigned int i = 0; i < 16; i++) printf("%02X ",i);
+	for (unsigned int j = 0; j < 22 && !feof(fHex); j++)
+	{
+		SetCursorPosition(left + 1, top + 2 + j);
+		SetColor(Magenta, Yellow);
+		printf("%08X  ", j);
+		for (int i = 0; i < 16 && !feof(fHex); i++)
+		{
+
+			fread(&c, sizeof(char), 1, fHex);
+			SetColor(Magenta, White);
+			printf("%02X ", c);
+		}
+		fseek(fHex, -16, SEEK_CUR);
+		for (int i = 0; i < 16 && !feof(fHex); i++)
+		{
+
+			fread(&c, sizeof(char), 1, fHex);
+			SetColor(Magenta, Yellow);
+			if ((c >= 0x00)&&(c <= 0x0f)) printf(".");
+			else
+			printf("%c", c);
+		}
+	}
+	fclose(fHex);
+	_getch();
+
+
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+}
 
 	int main(int argc, const char * argv[]) 
 	{
@@ -716,7 +795,8 @@ void deleteFolder(char *path)
 		_chdir("C:\\");
 		FILE *source = NULL, *dist;
 		unsigned int fCount;
-		char buffer[260], fCopy[260];
+		char buffer[260], fCopy[260], pathCopy[MAX_PATH];
+		pathCopy[0] = '\0';
 		ConsoleFrame();
 		setlocale(LC_ALL, "rus");
 		int CrntStr = 0, key, CrntFile = 0;
@@ -800,24 +880,41 @@ void deleteFolder(char *path)
 			if (key == 'c')
 			{
 				if (source != NULL) fclose(source);
+				pathCopy[0] = '\0';
 				GetFileName(flast, fCopy, CrntFile);
-				//memcpy(fCopy, buffer, 260);
-				source = fopen(fCopy, "r+b");
-				if (source != NULL)  addLog("Файл добавлен в буфер","INFO");
-				else addLog("Ошибка открытия файла","ERROR");
-			}
-			if ((key == 'v') && (source != NULL))
-			{
-				dist = fopen(fCopy, "r+b");
-				memcpy(buffer, fCopy, 260);
-				if (dist != NULL)
+				if (GetFileAttrib(flast, CrntFile) & _A_SUBDIR)
 				{
-					fclose(dist);
-					ExistFile(&fCopy);
+					_chdir(fCopy);
+					_getcwd(pathCopy, MAX_PATH);
+					_chdir("..");
 				}
-				dist = fopen(fCopy, "w+b");
-				FileCopy(source, dist);
-				fclose(dist);
+				else 
+				{
+					source = fopen(fCopy, "r+b");
+					if (source != NULL)  addLog("Файл добавлен в буфер","INFO");
+					else
+					{
+						addLog("Ошибка открытия файла", "ERROR");
+						showError("Файл не может быть скопирован", "");
+					}
+				}
+			}
+			if (key == 'v')
+			{
+				if (source != NULL)
+				{
+					dist = fopen(fCopy, "r+b");
+					memcpy(buffer, fCopy, 260);
+					if (dist != NULL)
+					{
+						fclose(dist);
+						ExistFile(&fCopy);
+					}
+					dist = fopen(fCopy, "w+b");
+					FileCopy(source, dist);
+					fclose(dist);
+				}
+				if (pathCopy[0]) FolderCopy(pathCopy, fCopy);
 				RefreshFiles(&flast, &fCount);
 				CrntStr = 0;
 				CrntFile = 0;
@@ -826,6 +923,11 @@ void deleteFolder(char *path)
 			if (key == 'e')
 			{
 				showError("Вы нажали не на ту клавишу", "О БОЖЕ!!!");
+			}
+			if (key == 'h')
+			{
+				GetFileName(flast, buffer, CrntFile);
+				runHEX(buffer);
 			}
 			if (key == 't')
 			{
