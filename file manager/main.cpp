@@ -212,7 +212,7 @@ void WindowFrame(short top, short left, short bottom, short right, ConsoleColor 
 	printf("%c", 200);
 	for (int i = 0; i < (right - left - 2); ++i)
 		printf("%c", 205);
-	printf("%c", 188);
+	printf("%c", 188); 
 	setlocale(LC_CTYPE, "rus");
 }
 void showWindow(CHAR_INFO **chiBuffer, short top, short left, short bottom, short right, ConsoleColor background)
@@ -359,6 +359,8 @@ void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x)
 		}
 		else printf("%dB ", FileSize);
 		int k = 0;
+		if (FileSize == 0) k = 1;
+		else
 		while (FileSize)
 		{
 			FileSize /= 10;
@@ -438,13 +440,13 @@ void sortAlph(files **flast)
 	files *sortFiles = slist.next;
 	while (pointer)
 	{
-		if (!pointer->file.size) addFiles(pointer->file, &sortFiles);
+		if (pointer->file.attrib & _A_SUBDIR) addFiles(pointer->file, &sortFiles);
 		pointer = pointer->next;
 	}
 	pointer = *flast;
 	while (pointer)
 	{
-		if (pointer->file.size) addFiles(pointer->file, &sortFiles);
+		if (!(pointer->file.attrib & _A_SUBDIR)) addFiles(pointer->file, &sortFiles);
 		pointer = pointer->next;
 	}
 	deleteAll(flast);
@@ -740,7 +742,193 @@ void FolderCopy(char *path, char *fCopy)
 	_findclose(p);
 	_chdir("..");
 }
-void runHEX(char *FileName)
+void selectHEX(int CrntStr, int CrntStl, bool select)
+{
+	HANDLE hStdout;
+	SMALL_RECT srctReadRect;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[ConsoleSize.X - 2]; // [1][122]; 
+	COORD coordBufSize;
+	COORD coordBufCoord;												/*Чтение из консоли*/
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	srctReadRect.Top = ConsoleSize.Y / 2 - 11 + CrntStr;    // top left: row 2, col 1 
+	srctReadRect.Left = ConsoleSize.X / 2 - 29 + 3 * CrntStl;
+	srctReadRect.Bottom = ConsoleSize.Y / 2 - 10 + CrntStr; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X / 2 - 27 + 3 * CrntStl;
+	coordBufSize.Y = 1;
+	coordBufSize.X = 2;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+	if (select)
+	for (int i = 0; i < 2; i++) chiBuffer[i].Attributes = (WORD)((White << 4) | Black);
+	else
+		for (int i = 0; i < 2; i++) chiBuffer[i].Attributes = (WORD)((Magenta << 4) | White);
+	 WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+	chiBuffer = new CHAR_INFO[8];
+	srctReadRect.Top = ConsoleSize.Y / 2 - 11 + CrntStr;    // top left: row 2, col 1 
+	srctReadRect.Left = ConsoleSize.X / 2 - 39;
+	srctReadRect.Bottom = ConsoleSize.Y / 2 - 10 + CrntStr; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X / 2 - 31;
+	coordBufSize.Y = 1;
+	coordBufSize.X = 8;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+	if (select)
+		for (int i = 0; i < 8; i++) chiBuffer[i].Attributes = (WORD)((Magenta << 4) | White);
+	else
+		for (int i = 0; i < 8; i++) chiBuffer[i].Attributes = (WORD)((Magenta << 4) | Yellow);
+	WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+	chiBuffer = new CHAR_INFO[2];
+	srctReadRect.Top = ConsoleSize.Y / 2 - 12;    // top left: row 2, col 1 
+	srctReadRect.Left = ConsoleSize.X / 2 - 29 + 3 * CrntStl;
+	srctReadRect.Bottom = ConsoleSize.Y / 2 - 11; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X / 2 - 27 + 3 * CrntStl;
+	coordBufSize.Y = 1;
+	coordBufSize.X = 2;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+	if (select)
+		for (int i = 0; i < 2; i++) chiBuffer[i].Attributes = (WORD)((Magenta << 4) | White);
+	else
+		for (int i = 0; i < 2; i++) chiBuffer[i].Attributes = (WORD)((Magenta << 4) | Yellow);
+	WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+	chiBuffer = new CHAR_INFO[1];
+	srctReadRect.Top = ConsoleSize.Y / 2 - 11 + CrntStr;    // top left: row 2, col 1 
+	srctReadRect.Left = ConsoleSize.X / 2 + 20 + CrntStl;
+	srctReadRect.Bottom = ConsoleSize.Y / 2 - 10 + CrntStr; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X / 2 + 21 + CrntStl;
+	coordBufSize.Y = 1;
+	coordBufSize.X = 1;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+	if (select)
+		chiBuffer[0].Attributes = (WORD)((Yellow << 4) | Black);
+	else
+		chiBuffer[0].Attributes = (WORD)((Magenta << 4) | Yellow);
+	WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+}
+void readBlockDownHEX()
+{
+	HANDLE hStdout;
+	SMALL_RECT srctReadRect;
+	int size = 21*78;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[size]; // [][122]; 
+	COORD coordBufSize;
+	COORD coordBufCoord;												/*Чтение из консоли*/
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	srctReadRect.Top = ConsoleSize.Y / 2 - 11;    // top left: row 2, col 1 
+	srctReadRect.Left = ConsoleSize.X / 2 - 39;
+	srctReadRect.Bottom = ConsoleSize.Y / 2 + 10; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X / 2 + 39;
+	coordBufSize.Y = 21;
+	coordBufSize.X = 78;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+
+	ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+
+	srctReadRect.Top = ConsoleSize.Y / 2 - 10;    // top left: row 2, col 1 
+	srctReadRect.Bottom = ConsoleSize.Y / 2 + 11; // bot. right: row 2, col 120 
+
+	//for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
+	WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+}
+void readBlockUpHEX()
+{
+	HANDLE hStdout;
+	SMALL_RECT srctReadRect;
+	int size = 21 * 78;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[size]; // [][122]; 
+	COORD coordBufSize;
+	COORD coordBufCoord;												/*Чтение из консоли*/
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	srctReadRect.Top = ConsoleSize.Y / 2 - 10;    // top left: row 2, col 1 
+	srctReadRect.Left = ConsoleSize.X / 2 - 39;
+	srctReadRect.Bottom = ConsoleSize.Y / 2 + 11; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X / 2 + 39;
+	coordBufSize.Y = 21;
+	coordBufSize.X = 78;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+
+	ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+
+	srctReadRect.Top = ConsoleSize.Y / 2 - 11;    // top left: row 2, col 1 
+	srctReadRect.Bottom = ConsoleSize.Y / 2 + 10; // bot. right: row 2, col 120 
+
+												  //for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
+	WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+}
+void runHEX(char *FileName, _fsize_t FileSize)
 {
 	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * 25];
 	short top = ConsoleSize.Y / 2 - 13;
@@ -749,38 +937,144 @@ void runHEX(char *FileName)
 	short right = ConsoleSize.X / 2 + 40;
 	showWindow(&chiBuffer, top, left, bottom, right, Magenta);
 	FILE *fHex;
+	unsigned int lastAdress = FileSize / 16;
+	int lastStl = FileSize % 16;
 	unsigned char c;
 	fHex = fopen(FileName, "r+b");
 	SetCursorPosition(left + 11, top + 1);
 	SetColor(Magenta, Yellow);
+	unsigned int adress;
 	for (unsigned int i = 0; i < 16; i++) printf("%02X ",i);
-	for (unsigned int j = 0; j < 22 && !feof(fHex); j++)
+	for (adress = 0; adress < 22 && !feof(fHex); adress++)
 	{
-		SetCursorPosition(left + 1, top + 2 + j);
+		SetCursorPosition(left + 1, top + 2 + adress);
 		SetColor(Magenta, Yellow);
-		printf("%08X  ", j);
-		for (int i = 0; i < 16 && !feof(fHex); i++)
+		printf("%08X", adress);
+		for (int i = 0; i < 16; i++)
 		{
-
 			fread(&c, sizeof(char), 1, fHex);
+			if (feof(fHex)) break;
+			SetCursorPosition(left + 11 + i * 3, top + 2 + adress);
 			SetColor(Magenta, White);
-			printf("%02X ", c);
-		}
-		fseek(fHex, -16, SEEK_CUR);
-		for (int i = 0; i < 16 && !feof(fHex); i++)
-		{
-
-			fread(&c, sizeof(char), 1, fHex);
+			printf("%02X", c);
+			SetCursorPosition(left + 60 + i, top + 2 + adress);
 			SetColor(Magenta, Yellow);
-			if ((c >= 0x00)&&(c <= 0x0f)) printf(".");
+			if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
 			else
-			printf("%c", c);
+				printf("%c", c);
 		}
 	}
+	adress = 0;
+	int key, CrntStr = 0, CrntStl = 0;
+	selectHEX(CrntStr, CrntStl, 1);
+	do
+	{
+		key = _getch();
+		if (key == 224)
+		{
+			key = _getch();
+			switch (key)
+			{
+			case 80:
+				if ((adress < lastAdress) && !((adress == lastAdress - 1) && (CrntStl >= lastStl)))
+				if (CrntStr < 21)
+				{
+					selectHEX(CrntStr, CrntStl, 0);
+					CrntStr++;
+					adress++;
+					selectHEX(CrntStr, CrntStl, 1);
+				}
+				else
+				{
+					selectHEX(CrntStr, CrntStl, 0);
+					adress++;
+					readBlockUpHEX();
+					fseek(fHex, adress * 16, SEEK_SET);
+					SetCursorPosition(left + 1, bottom - 2);
+					SetColor(Magenta, Yellow);
+					printf("%08X", adress);
+					for (int i = 0; i < 16; i++)
+					{
+						fread(&c, sizeof(char), 1, fHex);
+						if (feof(fHex))
+						{
+							while (i < 16)
+							{
+								SetCursorPosition(left + 11 + i * 3, bottom - 2);
+								printf("  ");
+								SetCursorPosition(left + 60 + i, bottom - 2);
+								printf(" ");
+								i++;
+							}
+							break;
+						}
+						SetCursorPosition(left + 11 + i * 3, bottom - 2);
+						SetColor(Magenta, White);
+						printf("%02X", c);
+						SetCursorPosition(left + 60 + i, bottom - 2);
+						SetColor(Magenta, Yellow);
+						if (((c >= 0x00) && (c <= 0x0f))|| (c == 0x95)) printf(".");
+						else
+							printf("%c", c);
+					}
+					selectHEX(CrntStr, CrntStl, 1);
+				}
+				break;
+			case 72:
+				if (adress)
+				if (CrntStr)
+				{
+					selectHEX(CrntStr, CrntStl, 0);
+					CrntStr--;
+					adress--;
+					selectHEX(CrntStr, CrntStl, 1);
+				}
+				else
+				{
+					selectHEX(CrntStr, CrntStl, 0);
+					adress--;
+					readBlockDownHEX();
+					fseek(fHex, adress * 16, SEEK_SET);
+					SetCursorPosition(left + 1, top + 2);
+					SetColor(Magenta, Yellow);
+					printf("%08X", adress);
+					for (int i = 0; i < 16; i++)
+					{
+						fread(&c, sizeof(char), 1, fHex);
+						SetCursorPosition(left + 11 + i * 3, top + 2);
+						SetColor(Magenta, White);
+						printf("%02X", c);
+						SetCursorPosition(left + 60 + i, top + 2);
+						SetColor(Magenta, Yellow);
+						if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
+						else
+							printf("%c", c);
+					}
+					selectHEX(CrntStr, CrntStl, 1);
+				}
+				break;
+			case 75:
+				if (CrntStl)
+				{
+					selectHEX(CrntStr, CrntStl, 0);
+					CrntStl--;
+					selectHEX(CrntStr, CrntStl, 1);
+				}
+				break;
+			case 77:
+				if ((CrntStl < 15) && !((adress == lastAdress) && (CrntStl == lastStl - 1)))
+				{
+					selectHEX(CrntStr, CrntStl, 0);
+					CrntStl++;
+					selectHEX(CrntStr, CrntStl, 1);
+				}
+				break;
+			default:
+				break;
+			}
+		}
+	} while (key != 27);
 	fclose(fHex);
-	_getch();
-
-
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
 }
@@ -926,8 +1220,9 @@ void runHEX(char *FileName)
 			}
 			if (key == 'h')
 			{
+				
 				GetFileName(flast, buffer, CrntFile);
-				runHEX(buffer);
+				runHEX(buffer, GetFileSize(flast, CrntFile));
 			}
 			if (key == 't')
 			{
