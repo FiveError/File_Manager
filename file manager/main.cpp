@@ -473,25 +473,6 @@ void searchFiles(files **flast, unsigned int *a) // принимает два параметра: пут
 		_findclose(p);
 		sortAlph(flast);
 }
-void GetFileName(files *flast, char *buffer, int CrntStr)
-{
-	for (; CrntStr > 0; --CrntStr) flast=flast->next;
-	memcpy(buffer, flast->file.name, 260);
-}
-_fsize_t GetFileSize(files *flast, int CrntStr)
-{
-	_fsize_t a;
-	for (; CrntStr > 0; --CrntStr) flast = flast->next;
-	a = flast->file.size;
-	return a;
-}
-unsigned int GetFileAttrib(files *flast, int CrntStr)
-{
-	unsigned int a;
-	for (; CrntStr > 0; --CrntStr) flast = flast->next;
-	a = flast->file.attrib;
-	return a;
-}
 void FileCopy(FILE *source, FILE *dist)
 {
 	unsigned int fsize, n;
@@ -500,11 +481,14 @@ void FileCopy(FILE *source, FILE *dist)
 	rewind(source);
 	char *buffer;
 	n = fsize / 65536;
-	for (int i = 0; i < n; ++i)
+	if (n > 0)
 	{
 		buffer = new char[65536];
-		fread(buffer, 65536, sizeof(char), source);
-		fwrite(buffer, 65536, sizeof(char), dist);
+		for (int i = 0; i < n; ++i)
+		{
+			fread(buffer, 65536, sizeof(char), source);
+			fwrite(buffer, 65536, sizeof(char), dist);
+		}
 		delete[] buffer;
 	}
 	int ost = fsize - n * 65536;
@@ -513,11 +497,14 @@ void FileCopy(FILE *source, FILE *dist)
 	fwrite(buffer, ost, sizeof(char), dist);
 	delete[] buffer;
 }
-void RefreshFiles(files **flast, unsigned int *fCount)
+void RefreshFiles(files **flast, unsigned int *fCount, int *CrntStr, int *CrntFile, files **fCrnt)
 {
 	deleteAll(flast);
 	searchFiles(flast, fCount);
 	show(*flast, 0, FALSE);
+	*CrntStr = 0;
+	*CrntFile = 0;
+	*fCrnt = *flast;
 }
 void addLog(char *message, char  *typemessage)
 {
@@ -1099,15 +1086,12 @@ void renameWindow(char *FileName)
 		NewName[i] = FileName[i];
 	SetCursorPosition(left + 1, top + 2);
 	if (i < 78) printf("%s", NewName);
-	
-
 	int key;
 	do
 	{
 		key = _getch();
-		if (((key >= 48) && (key <= 57)) || ((key >= 65) && (key <= 91)) || ((key >= 93) && (key <= 122)) ||
-			((key >= 128) && (key <= 175)) || ((key >= 224) && (key <= 241)) || ((key >= 32)&&(key <= 46)) ||
-			(key == 59) || (key == 61) || (key == 64))
+		if (((key >= 32) && (key <= 126) && (key != 34) && (key != 47) && (key != 58) && (key != 60) && (key != 62) && (key != 63) && (key != 42) && (key != 92) && (key != 124)) ||
+			((key >= 128) && (key <= 175)) || ((key >= 224) && (key <= 241)))
 		{
 			if ((key >= 224) && (key <= 241)) key += 16;
 			if ((key >= 128) && (key <= 175)) key += 64;
@@ -1149,23 +1133,25 @@ void renameWindow(char *FileName)
 		int CrntStr = 0, key, CrntFile = 0;
 		files *flast = flist.next;
 		searchFiles(&flast, &fCount);
+		files *fCrnt = flast;
 		show(flast, 0,FALSE);
 		do
 		{
-			SelectStr(CrntStr);
 			key = _getch();
-			if (key == 224)
+			switch (key)
 			{
+			case 224:
 				key = _getch();
 				if ((key == 80) && (CrntFile < (fCount - 1)))
 				{
+					fCrnt = fCrnt->next;
 					if (CrntStr + 1 == (ConsoleSize.Y - 5))
 					{
 						readBlockUp();
 						CrntFile++;
-						GetFileName(flast, buffer, CrntFile);
+						SelectStr(CrntStr);
 						SetColor(Cyan, White);
-						showStr(buffer, GetFileSize(flast, CrntFile), GetFileAttrib(flast, CrntFile), ConsoleSize.X);
+						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X);
 					}
 					else
 					{
@@ -1177,13 +1163,14 @@ void renameWindow(char *FileName)
 					}
 				}
 				if ((key == 72) && (CrntFile)) {
+					fCrnt = fCrnt->prev;
 					if (!CrntStr)
 					{
 						readBlockDown();
 						CrntFile--;
-						GetFileName(flast, buffer, CrntFile);
+						SelectStr(CrntStr);
 						SetColor(Cyan, White);
-						showStr(buffer, GetFileSize(flast, CrntFile), GetFileAttrib(flast, CrntFile), ConsoleSize.X);
+						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X);
 					}
 					else
 					{
@@ -1196,40 +1183,30 @@ void renameWindow(char *FileName)
 				}
 				if (key == 83)
 				{
-					GetFileName(flast, buffer, CrntFile);
-					if ((buffer[0] == '.') && (buffer[1] == '.') && (buffer[2] == '\0')) showError("Путь назад невозможно удалить","");
+					if ((fCrnt->file.name[0] == '.') && (fCrnt->file.name[1] == '.') && (fCrnt->file.name[2] == '\0')) showError("Путь назад невозможно удалить","");
 					else
 					{
-						if (GetFileAttrib(flast, CrntFile) & _A_SUBDIR) deleteFolder(buffer); //удаление папки
-						else remove(buffer); //удаление файла
-						RefreshFiles(&flast, &fCount);
-						CrntStr = 0;
-						CrntFile = 0;
+						if (fCrnt->file.attrib & _A_SUBDIR) deleteFolder(fCrnt->file.name); //удаление папки
+						else
+							if (remove(fCrnt->file.name) == -1) showError("Данный файл не может быть удален", "");
+						RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
 					}
 				}
-				//SelectStr(CrntStr);
-			}
-			if ((key == 13) && (!GetFileSize(flast, CrntFile)))
-			{
-				GetFileName(flast, buffer, CrntFile);
-				_chdir(buffer);
-				RefreshFiles(&flast, &fCount);
-				CrntStr = 0;
-				CrntFile = 0;
-			}
-			if (key == 8)
-			{
+				break;
+			case 13:
+				if (!fCrnt->file.size)
+				_chdir(fCrnt->file.name);
+				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				break;
+			case 8:
 				_chdir("..");
-				RefreshFiles(&flast, &fCount);
-				CrntStr = 0;
-				CrntFile = 0;
-			}
-			if (key == 'c')
-			{
+				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				break;
+			case 'c':
 				if (source != NULL) fclose(source);
 				pathCopy[0] = '\0';
-				GetFileName(flast, fCopy, CrntFile);
-				if (GetFileAttrib(flast, CrntFile) & _A_SUBDIR)
+				memcpy(fCopy, fCrnt->file.name, 260);
+				if (fCrnt->file.attrib & _A_SUBDIR)
 				{
 					_chdir(fCopy);
 					_getcwd(pathCopy, MAX_PATH);
@@ -1245,9 +1222,8 @@ void renameWindow(char *FileName)
 						showError("Файл не может быть скопирован", "");
 					}
 				}
-			}
-			if (key == 'v')
-			{
+				break;
+			case 'v':
 				if (source != NULL)
 				{
 					dist = fopen(fCopy, "r+b");
@@ -1260,39 +1236,29 @@ void renameWindow(char *FileName)
 					dist = fopen(fCopy, "w+b");
 					FileCopy(source, dist);
 					fclose(dist);
+					memcpy(fCopy, buffer, 260);
 				}
 				if (pathCopy[0]) FolderCopy(pathCopy, fCopy);
-				RefreshFiles(&flast, &fCount);
-				CrntStr = 0;
-				CrntFile = 0;
-				memcpy(fCopy, buffer, 260);
-			}
-			if (key == 'e')
-			{
+				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				break;
+			case 'e':
 				showError("Вы нажали не на ту клавишу", "О БОЖЕ!!!");
-			}
-			if (key == 'h')
-			{
-				
-				GetFileName(flast, buffer, CrntFile);
-				runHEX(buffer, GetFileSize(flast, CrntFile));
-			}
-			if (key == 't')
-			{
+				break;
+			case 'h':
+				runHEX(fCrnt->file.name, fCrnt->file.size);
+				break;
+			case 't':
 				newFolder();
-				RefreshFiles(&flast, &fCount);
-				CrntStr = 0;
-				CrntFile = 0;
-				}
-			if (key == 'r')
-			{
-				GetFileName(flast, buffer, CrntFile);
-				renameWindow(buffer);
-				RefreshFiles(&flast, &fCount);
-				CrntFile = 0;
-				CrntStr = 0;
+				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				break;
+			case 'r':
+				renameWindow(fCrnt->file.name);
+				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				break;
+			default:
+				break;
 			}
-			SetColor(Blue, White);
+			//SetColor(Blue, White);
 		} while (key != 27);
 		if (source != NULL) fclose(source);
 		addLog("Программа выключена","INFO");
