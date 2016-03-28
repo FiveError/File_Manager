@@ -1078,6 +1078,59 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
 }
+void renameWindow(char *FileName)
+{
+	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * 25];
+	short top = ConsoleSize.Y / 2 - 2;
+	short bottom = ConsoleSize.Y / 2 + 2;
+	short left = ConsoleSize.X / 2 - 40;
+	short right = ConsoleSize.X / 2 + 40;
+	showWindow(&chiBuffer, top, left, bottom, right, DarkGray);
+	SetCursorPosition(left + 1, top + 1);
+	printf("¬ведите новое им€:");
+	SetCursorPosition(left + 1, top + 2);
+	SetColor(Black, White);
+	printf("                                                                              ");
+	char NewName[260];
+	for (int i = 0; i < 260; i++)
+		NewName[i] = '\0';
+	int i = 0;
+	for (; FileName[i]; i++)
+		NewName[i] = FileName[i];
+	SetCursorPosition(left + 1, top + 2);
+	if (i < 78) printf("%s", NewName);
+	
+
+	int key;
+	do
+	{
+		key = _getch();
+		if (((key >= 48) && (key <= 57)) || ((key >= 65) && (key <= 91)) || ((key >= 93) && (key <= 122)) ||
+			((key >= 128) && (key <= 175)) || ((key >= 224) && (key <= 241)) || ((key >= 32)&&(key <= 46)) ||
+			(key == 59) || (key == 61) || (key == 64))
+		{
+			if ((key >= 224) && (key <= 241)) key += 16;
+			if ((key >= 128) && (key <= 175)) key += 64;
+			printf("%c", key);
+			NewName[i++] = key;
+		}
+		if ((key == 8) && (i != 0))
+		{
+			SetCursorPosition(left + i, top + 2);
+			printf(" ");
+			NewName[--i] = '\0';
+			SetCursorPosition(left + 1 + i, top + 2);
+		}
+	
+
+	} while (key != 13);
+	
+	rename(FileName, NewName);
+	
+
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+}
 
 	int main(int argc, const char * argv[]) 
 	{
@@ -1154,7 +1207,7 @@ void runHEX(char *FileName, _fsize_t FileSize)
 						CrntFile = 0;
 					}
 				}
-				SelectStr(CrntStr);
+				//SelectStr(CrntStr);
 			}
 			if ((key == 13) && (!GetFileSize(flast, CrntFile)))
 			{
@@ -1231,6 +1284,14 @@ void runHEX(char *FileName, _fsize_t FileSize)
 				CrntStr = 0;
 				CrntFile = 0;
 				}
+			if (key == 'r')
+			{
+				GetFileName(flast, buffer, CrntFile);
+				renameWindow(buffer);
+				RefreshFiles(&flast, &fCount);
+				CrntFile = 0;
+				CrntStr = 0;
+			}
 			SetColor(Blue, White);
 		} while (key != 27);
 		if (source != NULL) fclose(source);
