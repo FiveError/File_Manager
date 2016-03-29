@@ -506,7 +506,7 @@ void RefreshFiles(files **flast, unsigned int *fCount, int *CrntStr, int *CrntFi
 	*CrntFile = 0;
 	*fCrnt = *flast;
 }
-void addLog(char *message, char  *typemessage)
+void addLog(char *message, char  *typemessage, char *extramessage = "")
 {
 	FILE *fLog;
 	if (message != "Программа запущена")
@@ -530,6 +530,9 @@ void addLog(char *message, char  *typemessage)
 	fwrite(typemessage, i+1, sizeof(char), fLog);
 	for (i = 0; message[i]; ++i);
 	fwrite(message, i+1, sizeof(char), fLog);
+	fwrite(" ", 1, sizeof(char), fLog);
+	for (i = 0; extramessage[i]; ++i);
+	fwrite(extramessage, i+1, sizeof(char), fLog);
 	fwrite("\n", 1, sizeof(char), fLog);
 	fclose(fLog);
 }
@@ -1162,6 +1165,7 @@ void renameWindow(char *FileName)
 	
 	rename(FileName, NewName);
 	EnableCursor(false);
+	addLog(FileName, "RENAME", NewName);
 
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
@@ -1237,16 +1241,22 @@ void renameWindow(char *FileName)
 					if ((fCrnt->file.name[0] == '.') && (fCrnt->file.name[1] == '.') && (fCrnt->file.name[2] == '\0')) showError("Путь назад невозможно удалить","");
 					else
 					{
-						if (fCrnt->file.attrib & _A_SUBDIR) deleteFolder(fCrnt->file.name); //удаление папки
+						if (fCrnt->file.attrib & _A_SUBDIR)
+						{
+							deleteFolder(fCrnt->file.name); 
+							addLog(fCrnt->file.name, "INFO", "Удалена");
+						}																			//удаление папки
 						else
 							if (remove(fCrnt->file.name) == -1) showError("Данный файл не может быть удален", "");
+							else addLog(fCrnt->file.name, "INFO", "Удален");
 						RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
 					}
 				}
 				break;
 			case 13:
-				if (!fCrnt->file.size)
+				if (fCrnt->file.attrib & _A_SUBDIR)
 				_chdir(fCrnt->file.name);
+				addLog("Перешли в папку", "INFO", fCrnt->file.name);
 				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
 				break;
 			case 8:
@@ -1266,7 +1276,7 @@ void renameWindow(char *FileName)
 				else 
 				{
 					source = fopen(fCopy, "r+b");
-					if (source != NULL)  addLog("Файл добавлен в буфер","INFO");
+					if (source != NULL)  addLog(fCopy,"COPY", "Добавлен в буфер");
 					else
 					{
 						addLog("Ошибка открытия файла", "ERROR");
@@ -1288,18 +1298,26 @@ void renameWindow(char *FileName)
 					FileCopy(source, dist);
 					fclose(dist);
 					memcpy(fCopy, buffer, 260);
+					addLog(fCopy, "COPY", "Успешно скопирован");
 				}
 				if (pathCopy[0]) FolderCopy(pathCopy, fCopy);
 				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				addLog(fCopy, "COPY", "Успешно скопирован");
 				break;
 			case 'e':
 				showError("Вы нажали не на ту клавишу", "О БОЖЕ!!!");
+				addLog("Нажата клавиша ошибки", "ERROR");
 				break;
 			case 'h':
-				runHEX(fCrnt->file.name, fCrnt->file.size);
+				if (!(fCrnt->file.attrib & _A_SUBDIR))
+				{
+					runHEX(fCrnt->file.name, fCrnt->file.size);
+					addLog(fCrnt->file.name, "INFO", "Открыт в HEX редакторе");
+				}
 				break;
 			case 't':
 				newFolder();
+				addLog("Созданна новая папка", "INFO");
 				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
 				break;
 			case 'r':
