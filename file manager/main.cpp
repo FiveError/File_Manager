@@ -346,28 +346,31 @@ void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x)
 	}
 	else
 	{
-		if (FileSize / 10000000)
-		{
-			FileSize /= 1024*1024;
-			printf("%dMB", FileSize);
-		}
-		else
-		if (FileSize / 10000)
-		{
-			FileSize /= 1024;
-			printf("%dKB", FileSize);
-		}
-		else printf("%dB ", FileSize);
-		int k = 0;
-		if (FileSize == 0) k = 1;
-		else
-		while (FileSize)
-		{
-			FileSize /= 10;
-			k++;
-		}
-		for (int i = 0; i < (x / 6 - 2 - k); i++)
-			printf(" ");
+		
+		
+			if (FileSize / 10000000)
+			{
+				FileSize /= 1024 * 1024;
+				printf("%dMB", FileSize);
+			}
+			else
+				if (FileSize / 10000)
+				{
+					FileSize /= 1024;
+					printf("%dKB", FileSize);
+				}
+				else printf("%dB ", FileSize);
+				int k = 0;
+				if (FileSize == 0) k = 1;
+				else
+					while (FileSize)
+					{
+						FileSize /= 10;
+						k++;
+					}
+				for (int i = 0; i < (x / 6 - 2 - k); i++)
+					printf(" ");
+		
 	}
 }
 void showClearStr(int x)
@@ -415,6 +418,7 @@ void show(files *first, int a, bool b)
 		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
 		i--;
 	}
+
 	if (i) for (; i > 0; i--)
 	{
 		SelectStr(ConsoleSize.Y - 5 - i);
@@ -1170,9 +1174,27 @@ void renameWindow(char *FileName)
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
 }
+void listDisk(bool *Disk)
+{
+	
+	int n;
+	DWORD dr = GetLogicalDrives();
+	for (int x = 0; x < 26; x++)
+	{
+		n = ((dr >> x) & 1);
+		if (n)
+			*(Disk + x) = true;
+		else
+			*(Disk + x) = false;
+	}
+
+}
 
 	int main(int argc, const char * argv[]) 
 	{
+		int a = sizeof(_finddata_t);
+		bool Disk[26];
+		listDisk(Disk);
 		getLogPath(argv);	
 		SetConsoleTitle(L"File Manager");
 		addLog("Программа запущена","INFO");
