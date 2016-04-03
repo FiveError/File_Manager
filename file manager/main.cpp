@@ -1088,17 +1088,20 @@ void renameWindow(char *FileName)
 	char NewName[260];
 	for (int i = 0; i < 260; i++)
 		NewName[i] = '\0';
-	int i = 0, length;
+	int i = 0;
 	for (; FileName[i]; i++)
 		NewName[i] = FileName[i];
 	SetCursorPosition(left + 1, top + 2);
 	EnableCursor(true);
+	int key;
+	char temp;
+	unsigned lchar = 0;
 	if (i < 78) printf("%s", NewName);
 	else {
-		(printf("%s", NewName + i - 77));
+		printf("%s", NewName + i - 77);
+		lchar = i - 77;
 		SetCursorPosition(right - 2, top + 2);
 	}
-	int key;
 	do
 	{
 		key = _getch();
@@ -1108,69 +1111,155 @@ void renameWindow(char *FileName)
 			switch (key)
 			{
 			case 75:
-				if (i) i--;
+				if (i)
+				{
+					if (lchar != i) i--;
+					else
+					{
+						for (i--; i-lchar < 77; i++)
+							printf("%c", NewName[i]);
+						i -= 78;
+						lchar--;
+					}
+				}
 				break;
 			case 77:
-				if (NewName[i]) i++;
+				if (NewName[i])
+				{
+					if (i - lchar < 77) i++;
+					else
+					{
+						SetCursorPosition(left + 1, top + 2);
+						for (i -= 76; i - lchar < 78; i++)
+							printf("%c", NewName[i]);
+						printf("%c", NewName[i]);
+						lchar++;
+					}
+				}
 				break;
 			default:
 				break;
 			}
-			SetCursorPosition(left + 1 + i, top + 2);
+			
+			SetCursorPosition(left + 1 + i - lchar, top + 2);
 		}
 		else
-		if (((key >= 32) && (key <= 126) && (key != 34) && (key != 47) && (key != 58) && (key != 60) && (key != 62) && (key != 63) && (key != 42) && (key != 92) && (key != 124)) ||
-			((key >= 128) && (key <= 175)) || ((key >= 224) && (key <= 241)))
-		{
-			if ((key >= 224) && (key <= 241)) key += 16;
-			if ((key >= 128) && (key <= 175)) key += 64;
-			if (NewName[i])
+			if (((key >= 32) && (key <= 126) && (key != 34) && (key != 47) && (key != 58) && (key != 60) && (key != 62) && (key != 63) && (key != 42) && (key != 92) && (key != 124)) ||
+				((key >= 128) && (key <= 175)) || ((key >= 224) && (key <= 241)))
 			{
-				for (int j = i; NewName[j-1]; j++) FileName[j] = NewName[j];
-				printf("%c", key);
-				for (int j = i; NewName[j]; j++)
-				{
-					printf("%c", FileName[j]);
-					NewName[j + 1] = FileName[j];
-				}
-				NewName[i++] = key;
-				SetCursorPosition(left + 1 + i, top + 2);
-			}
-			else
-			{
-				printf("%c", key);
-				NewName[i++] = key;
-			}
-		}
+				if ((key >= 224) && (key <= 241)) key += 16;
+				if ((key >= 128) && (key <= 175)) key += 64;
+				if ((i < 77) && (!lchar))
+					if (NewName[i])
+						{
+							for (int j = i; NewName[j - 1]; j++)
+							{
+								temp = NewName[j];
+								if (j < 78)
+									printf("%c", key);
+								NewName[j] = key;
+								key = temp;
+							}
+							i++;
+							SetCursorPosition(left + 1 + i, top + 2);
+						}
+					else
+						{
+							printf("%c", key);
+							NewName[i++] = key;
+						}					
+				else
+					if (NewName[i])
+					{
+						if (!NewName[259])
+						{
+							SetCursorPosition(left + 1, top + 2);
+							lchar++;
+							for (int j = lchar; j < i; j++) printf("%c", NewName[j]);
+							printf("%c", key);
+							for (int j = i; NewName[j - 1]; j++)
+							{
+								temp = NewName[j];
+								NewName[j] = key;
+								key = temp;
+							}
+							i++;
+							SetCursorPosition(left + 1 + i - lchar, top + 2);
+						}
+						else
+						{
+							showError("Длина имени не может привышать 260 символов", "");
+							SetColor(Black, White);
+						}
+					}
+					else
+					{
+						if (!NewName[259])
+						{
+							SetCursorPosition(left + 1, top + 2);
+							for (i -= 76; NewName[i]; i++)
+								printf("%c", NewName[i]);
+							printf("%c", key);
+							NewName[i++] = key;
+							lchar++;
+						}
+						else
+						{
+							showError("Длина имени не может привышать 260 символов", "");
+							SetColor(Black, White);
+						}
+					}
+			}	
 		if ((key == 8) && (i != 0))
 		{
-			if (NewName[i])
-			{
-				i--;
-				SetCursorPosition(left + 1 + i, top + 2);
-				for (int j = i; NewName[j]; j++)
+			if (!lchar)
+				if (NewName[i])
 				{
-					NewName[j] = NewName[j + 1];
-					printf("%c", NewName[j]);
+					i--;
+					SetCursorPosition(left + 1 + i, top + 2);
+					for (int j = i; NewName[j]; j++)
+					{
+						NewName[j] = NewName[j + 1];
+						if (j < 78)
+						printf("%c", NewName[j]);
+					}
+					SetCursorPosition(left + 1 + i, top + 2);
 				}
-				SetCursorPosition(left + 1 + i, top + 2);
-			}
-			else
-			{
-				SetCursorPosition(left + i, top + 2);
-				printf(" ");
-				NewName[--i] = '\0';
-				SetCursorPosition(left + 1 + i, top + 2);
-			}
+				else
+				{
+					SetCursorPosition(left + i, top + 2);
+					printf(" ");
+					NewName[--i] = '\0';
+					SetCursorPosition(left + 1 + i, top + 2);
+				}
+			else 
+				if (NewName[i])
+				{
+					SetCursorPosition(left + 1, top + 2);
+					i--;
+					lchar--;
+					for (int j = lchar; j < i; j++) printf("%c", NewName[j]);
+					for (int j = i; NewName[j]; j++) NewName[j] = NewName[j + 1];
+					NewName[259] = '\0';
+					SetCursorPosition(left + 1 + i - lchar, top + 2);
+				}
+				else
+				{
+					SetCursorPosition(left + 1, top + 2);
+					for (i -= 78; NewName[i+1]; i++)
+						printf("%c", NewName[i]);
+					NewName[i] = '\0';
+					lchar--;
+				}
 		}
-	
-
-	} while (key != 13);
-	
-	rename(FileName, NewName);
+		if (key == 13)
+		{
+			rename(FileName, NewName);
+			addLog(FileName, "RENAME", NewName);
+			break;
+		}
+	} while (key != 27);
 	EnableCursor(false);
-	addLog(FileName, "RENAME", NewName);
-
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
 }
