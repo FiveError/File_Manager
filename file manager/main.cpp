@@ -1148,9 +1148,10 @@ void runHEX(char *FileName, _fsize_t FileSize)
 		lastAdress++;
 	}
 	unsigned char c;
-	bool secondChar = false;
-	fHex = fopen(FileName, "r+b");
-	fNew = fopen("BufferFile", "w+b");
+	bool secondChar = false; 
+	rename(FileName, "BufferFile");
+	fHex = fopen("BufferFile", "r+b");
+	fNew = fopen(FileName, "w+b");
 	FileCopy(fHex, fNew);
 	rewind(fHex);
 	SetCursorPosition(left + 11, top + 1);
@@ -1376,8 +1377,7 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	} while (key != 27);
 	fclose(fNew);
 	fclose(fHex);
-	remove(FileName);
-	rename("BufferFile", FileName);
+	remove("BufferFile");
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
 }
