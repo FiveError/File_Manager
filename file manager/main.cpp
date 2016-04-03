@@ -922,156 +922,7 @@ void readBlockUpHEX()
 		&srctReadRect);  // dest. screen buffer rectangle 
 	delete[] chiBuffer;
 }
-void runHEX(char *FileName, _fsize_t FileSize)
-{
-	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * 25];
-	short top = ConsoleSize.Y / 2 - 13;
-	short bottom = ConsoleSize.Y / 2 + 12;
-	short left = ConsoleSize.X / 2 - 40;
-	short right = ConsoleSize.X / 2 + 40;
-	showWindow(&chiBuffer, top, left, bottom, right, Magenta);
-	FILE *fHex;
-	unsigned int lastAdress = FileSize / 16;
-	int lastStl = FileSize % 16;
-	unsigned char c;
-	fHex = fopen(FileName, "r+b");
-	SetCursorPosition(left + 11, top + 1);
-	SetColor(Magenta, Yellow);
-	unsigned int adress;
-	for (unsigned int i = 0; i < 16; i++) printf("%02X ",i);
-	for (adress = 0; adress < 22 && !feof(fHex); adress++)
-	{
-		SetCursorPosition(left + 1, top + 2 + adress);
-		SetColor(Magenta, Yellow);
-		printf("%08X", adress);
-		for (int i = 0; i < 16; i++)
-		{
-			fread(&c, sizeof(char), 1, fHex);
-			if (feof(fHex)) break;
-			SetCursorPosition(left + 11 + i * 3, top + 2 + adress);
-			SetColor(Magenta, White);
-			printf("%02X", c);
-			SetCursorPosition(left + 60 + i, top + 2 + adress);
-			SetColor(Magenta, Yellow);
-			if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
-			else
-				printf("%c", c);
-		}
-	}
-	adress = 0;
-	int key, CrntStr = 0, CrntStl = 0;
-	selectHEX(CrntStr, CrntStl, 1);
-	do
-	{
-		key = _getch();
-		if (key == 224)
-		{
-			key = _getch();
-			switch (key)
-			{
-			case 80:
-				if ((adress < lastAdress) && !((adress == lastAdress - 1) && (CrntStl >= lastStl)))
-				if (CrntStr < 21)
-				{
-					selectHEX(CrntStr, CrntStl, 0);
-					CrntStr++;
-					adress++;
-					selectHEX(CrntStr, CrntStl, 1);
-				}
-				else
-				{
-					selectHEX(CrntStr, CrntStl, 0);
-					adress++;
-					readBlockUpHEX();
-					fseek(fHex, adress * 16, SEEK_SET);
-					SetCursorPosition(left + 1, bottom - 2);
-					SetColor(Magenta, Yellow);
-					printf("%08X", adress);
-					for (int i = 0; i < 16; i++)
-					{
-						fread(&c, sizeof(char), 1, fHex);
-						if (feof(fHex))
-						{
-							while (i < 16)
-							{
-								SetCursorPosition(left + 11 + i * 3, bottom - 2);
-								printf("  ");
-								SetCursorPosition(left + 60 + i, bottom - 2);
-								printf(" ");
-								i++;
-							}
-							break;
-						}
-						SetCursorPosition(left + 11 + i * 3, bottom - 2);
-						SetColor(Magenta, White);
-						printf("%02X", c);
-						SetCursorPosition(left + 60 + i, bottom - 2);
-						SetColor(Magenta, Yellow);
-						if (((c >= 0x00) && (c <= 0x0f))|| (c == 0x95)) printf(".");
-						else
-							printf("%c", c);
-					}
-					selectHEX(CrntStr, CrntStl, 1);
-				}
-				break;
-			case 72:
-				if (adress)
-				if (CrntStr)
-				{
-					selectHEX(CrntStr, CrntStl, 0);
-					CrntStr--;
-					adress--;
-					selectHEX(CrntStr, CrntStl, 1);
-				}
-				else
-				{
-					selectHEX(CrntStr, CrntStl, 0);
-					adress--;
-					readBlockDownHEX();
-					fseek(fHex, adress * 16, SEEK_SET);
-					SetCursorPosition(left + 1, top + 2);
-					SetColor(Magenta, Yellow);
-					printf("%08X", adress);
-					for (int i = 0; i < 16; i++)
-					{
-						fread(&c, sizeof(char), 1, fHex);
-						SetCursorPosition(left + 11 + i * 3, top + 2);
-						SetColor(Magenta, White);
-						printf("%02X", c);
-						SetCursorPosition(left + 60 + i, top + 2);
-						SetColor(Magenta, Yellow);
-						if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
-						else
-							printf("%c", c);
-					}
-					selectHEX(CrntStr, CrntStl, 1);
-				}
-				break;
-			case 75:
-				if (CrntStl)
-				{
-					selectHEX(CrntStr, CrntStl, 0);
-					CrntStl--;
-					selectHEX(CrntStr, CrntStl, 1);
-				}
-				break;
-			case 77:
-				if ((CrntStl < 15) && !((adress == lastAdress) && (CrntStl == lastStl - 1)))
-				{
-					selectHEX(CrntStr, CrntStl, 0);
-					CrntStl++;
-					selectHEX(CrntStr, CrntStl, 1);
-				}
-				break;
-			default:
-				break;
-			}
-		}
-	} while (key != 27);
-	fclose(fHex);
-	hideWindow(chiBuffer, top, left, bottom, right);
-	delete[] chiBuffer;
-}
+
 void renameWindow(char *FileName)
 {
 	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * 25];
@@ -1277,6 +1128,258 @@ void listDisk(bool *Disk)
 			*(Disk + x) = false;
 	}
 
+}
+void runHEX(char *FileName, _fsize_t FileSize)
+
+{
+	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * 25];
+	short top = ConsoleSize.Y / 2 - 13;
+	short bottom = ConsoleSize.Y / 2 + 12;
+	short left = ConsoleSize.X / 2 - 40;
+	short right = ConsoleSize.X / 2 + 40;
+	showWindow(&chiBuffer, top, left, bottom, right, Magenta);
+	FILE *fHex, *fNew;
+	unsigned int lastAdress = FileSize / 16;
+	int lastStl;
+	if (FileSize % 16 < 16) lastStl = FileSize % 16 + 1;
+	else
+	{
+		lastStl = 1;
+		lastAdress++;
+	}
+	unsigned char c;
+	bool secondChar = false;
+	fHex = fopen(FileName, "r+b");
+	fNew = fopen("BufferFile", "w+b");
+	FileCopy(fHex, fNew);
+	rewind(fHex);
+	SetCursorPosition(left + 11, top + 1);
+	SetColor(Magenta, Yellow);
+	unsigned int adress;
+	for (unsigned int i = 0; i < 16; i++) printf("%02X ", i);
+	for (adress = 0; adress < 22 && !feof(fHex); adress++)
+	{
+		SetCursorPosition(left + 1, top + 2 + adress);
+		SetColor(Magenta, Yellow);
+		printf("%08X", adress);
+		for (int i = 0; i < 16; i++)
+		{
+			fread(&c, sizeof(char), 1, fHex);
+			if (feof(fHex)) break;
+			SetCursorPosition(left + 11 + i * 3, top + 2 + adress);
+			SetColor(Magenta, White);
+			printf("%02X", c);
+			SetCursorPosition(left + 60 + i, top + 2 + adress);
+			SetColor(Magenta, Yellow);
+			if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
+			else
+				printf("%c", c);
+		}
+	}
+	adress = 0;
+	int key, CrntStr = 0, CrntStl = 0;
+	selectHEX(CrntStr, CrntStl, 1);
+	do
+	{
+		key = _getch();
+		if (key == 224)
+		{
+			key = _getch();
+			switch (key)
+			{
+			case 80:
+				if ((adress < lastAdress) && !((adress == lastAdress - 1) && (CrntStl >= lastStl)))
+					if (CrntStr < 21)
+					{
+						selectHEX(CrntStr, CrntStl, 0);
+						CrntStr++;
+						adress++;
+						selectHEX(CrntStr, CrntStl, 1);
+					}
+					else
+					{
+						selectHEX(CrntStr, CrntStl, 0);
+						adress++;
+						readBlockUpHEX();
+						fseek(fHex, adress * 16, SEEK_SET);
+						SetCursorPosition(left + 1, bottom - 2);
+						SetColor(Magenta, Yellow);
+						printf("%08X", adress);
+						for (int i = 0; i < 16; i++)
+						{
+							fread(&c, sizeof(char), 1, fHex);
+							if (feof(fHex))
+							{
+								while (i < 16)
+								{
+									SetCursorPosition(left + 11 + i * 3, bottom - 2);
+									printf("  ");
+									SetCursorPosition(left + 60 + i, bottom - 2);
+									printf(" ");
+									i++;
+								}
+								break;
+							}
+							SetCursorPosition(left + 11 + i * 3, bottom - 2);
+							SetColor(Magenta, White);
+							printf("%02X", c);
+							SetCursorPosition(left + 60 + i, bottom - 2);
+							SetColor(Magenta, Yellow);
+							if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
+							else
+								printf("%c", c);
+						}
+						selectHEX(CrntStr, CrntStl, 1);
+					}
+				break;
+			case 72:
+				if (adress)
+					if (CrntStr)
+					{
+						selectHEX(CrntStr, CrntStl, 0);
+						CrntStr--;
+						adress--;
+						selectHEX(CrntStr, CrntStl, 1);
+					}
+					else
+					{
+						selectHEX(CrntStr, CrntStl, 0);
+						adress--;
+						readBlockDownHEX();
+						fseek(fHex, adress * 16, SEEK_SET);
+						SetCursorPosition(left + 1, top + 2);
+						SetColor(Magenta, Yellow);
+						printf("%08X", adress);
+						for (int i = 0; i < 16; i++)
+						{
+							fread(&c, sizeof(char), 1, fHex);
+							SetCursorPosition(left + 11 + i * 3, top + 2);
+							SetColor(Magenta, White);
+							printf("%02X", c);
+							SetCursorPosition(left + 60 + i, top + 2);
+							SetColor(Magenta, Yellow);
+							if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
+							else
+								printf("%c", c);
+						}
+						selectHEX(CrntStr, CrntStl, 1);
+					}
+				break;
+			case 75:
+				if (CrntStl)
+				{
+					selectHEX(CrntStr, CrntStl, 0);
+					CrntStl--;
+					selectHEX(CrntStr, CrntStl, 1);
+				}
+				break;
+			case 77:
+				if ((CrntStl < 15) && !((adress >= lastAdress) && (CrntStl >= lastStl - 1)))
+				{
+					selectHEX(CrntStr, CrntStl, 0);
+					CrntStl++;
+					selectHEX(CrntStr, CrntStl, 1);
+				}
+				break;
+			default:
+				break;
+			}
+			secondChar = false;
+		}
+		if (key == 8)
+		{
+
+		}
+		if (((key >= '0') && (key <= '9')) || ((key >= 'a') && (key <= 'f')))
+		{
+			if ((key >= '0') && (key <= '9')) key -= 48;
+			if ((key >= 'a') && (key <= 'f')) key -= 87;
+			if (!secondChar)
+			{
+				fseek(fHex, adress * 16 + CrntStl, SEEK_SET);
+				fread(&c, 1, sizeof(char), fHex);
+				c = c % 16 + key * 16;
+				fseek(fNew, adress * 16 + CrntStl, SEEK_SET);
+				fwrite(&c, 1, sizeof(char), fNew);
+				secondChar = true;
+				SetColor(Yellow, Black);
+				SetCursorPosition(left + 60 + CrntStl, top + 2 + CrntStr);
+				printf("%c", c);
+				SetColor(Magenta, White);
+				SetCursorPosition(left + 11 + CrntStl * 3, top + 2 + CrntStr);
+				printf("%X", key);
+			}
+			else
+			{
+				printf("%X", key);
+				c = c / 16 * 16 + key;
+				fseek(fNew, adress * 16 + CrntStl, SEEK_SET);
+				fwrite(&c, 1, sizeof(char), fNew);
+				SetColor(Magenta, Yellow);
+				SetCursorPosition(left + 60 + CrntStl, top + 2 + CrntStr);
+				printf("%c", c);
+				secondChar = false;
+				selectHEX(CrntStr, CrntStl, 0);
+				if ((adress == lastAdress) && (CrntStl == lastStl - 1))
+					if (lastStl < 16) lastStl++;
+					else
+					{
+						lastStl = 1;
+						lastAdress++;
+					}
+				if (CrntStl < 15) CrntStl++;
+				else {
+					CrntStl = 0;
+					if (CrntStr < 21)
+					{
+						CrntStr++;
+						adress++;
+					}
+					else
+					{
+						selectHEX(CrntStr, CrntStl, 0);
+						adress++;
+						readBlockUpHEX();
+						fseek(fHex, adress * 16, SEEK_SET);
+						SetCursorPosition(left + 1, bottom - 2);
+						SetColor(Magenta, Yellow);
+						printf("%08X", adress);
+						for (int i = 0; i < 16; i++)
+						{
+							fread(&c, sizeof(char), 1, fHex);
+							if (feof(fHex))
+							{
+								while (i < 16)
+								{
+									SetCursorPosition(left + 11 + i * 3, bottom - 2);
+									printf("  ");
+									SetCursorPosition(left + 60 + i, bottom - 2);
+									printf(" ");
+									i++;
+								}
+								break;
+							}
+							SetCursorPosition(left + 11 + i * 3, bottom - 2);
+							SetColor(Magenta, White);
+							printf("%02X", c);
+							SetCursorPosition(left + 60 + i, bottom - 2);
+							SetColor(Magenta, Yellow);
+							if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
+							else
+								printf("%c", c);
+						}
+					}
+				}
+				selectHEX(CrntStr, CrntStl, 1);
+			}
+		}
+	} while (key != 27);
+	fclose(fNew);
+	fclose(fHex);
+	remove(FileName);
+	rename("BufferFile", FileName);
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
 }
 
 	int main(int argc, const char * argv[]) 
