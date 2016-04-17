@@ -8,6 +8,8 @@
 #include <ctime>
 #include <thread>
 #include <chrono>
+#include "huffman.h"
+
 using namespace std;
 char *logFile;
 COORD ConsoleSize = { 122,40 };
@@ -1537,6 +1539,13 @@ void runHEX(char *FileName, _fsize_t FileSize)
 			case 'r':
 				renameWindow(fCrnt->file.name);
 				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				break;
+			case 'z': //huffman
+				huffman(fCrnt->file.name);
+				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				break;
+			case'u'://unhuffman
+
 				break;
 			default:
 				break;
