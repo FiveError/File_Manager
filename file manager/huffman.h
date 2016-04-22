@@ -1,2 +1,3 @@
 #pragma once
-int huffman(char * Filename);
+void huffman(char * Filename);
+void unhuffman(char *Filename);

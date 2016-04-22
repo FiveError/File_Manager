@@ -12,7 +12,7 @@ struct Node
 	int one;
 	bool branch;
 };
-int huffman(char * Filename)
+void huffman(char * Filename)
 {
 
 	int weight[0x100];
@@ -59,7 +59,7 @@ int huffman(char * Filename)
 	vector<bool> data;
 	
 	{
-	ifstream f(Filename);
+	ifstream f(Filename, ios::binary);
 	while (!f.eof())
 	{
 		unsigned char ch;
@@ -78,7 +78,7 @@ int huffman(char * Filename)
 	int len = strlen(Filename);
 	memset(Filename + strlen(Filename), 'h' , 1);
 	*(Filename + len + 1) = '\0';
-	ofstream f(Filename);
+	ofstream f(Filename, ios::binary);
 	int treeSize = tree.size();
 	f.write((char*)&treeSize, sizeof(treeSize));
 	for (auto i : tree)
@@ -94,5 +94,44 @@ int huffman(char * Filename)
 		f.write((char*)&ch, sizeof(ch));
 	}
 	
-	return 0;
+}
+void unhuffman(char *Filename)
+{
+	if (*(Filename + strlen(Filename)-1) == 'h')
+	{
+		vector<Node> tree;
+		ifstream f(Filename, ios::binary);
+		int treeSize;
+		f.read((char*)&treeSize, sizeof(treeSize));
+		for (int i = 0; i < treeSize; ++i)
+		{
+			Node n;
+			f.read((char*)&n, sizeof(n));
+			tree.push_back(n);
+		}
+		vector<bool> data;
+		while (!f.eof())
+		{
+			unsigned char ch;
+			f.read((char *)&ch, sizeof(ch));
+			for (int i = 0; i < 8; ++i)
+				data.push_back((ch&(1 << i)) != 0);
+			
+		}
+		auto n = tree.size() - 1;
+		*(Filename + strlen(Filename) - 1) = '\0';
+		ofstream f1(Filename);
+		for (auto i : data)
+		{
+			if (i)
+				n = tree[n].one;
+			else
+				n = tree[n].zero;
+			if (tree[n].one == -1)
+			{
+				f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
+				n = tree.size() - 1;
+			}
+		}
+	}
 }

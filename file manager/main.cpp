@@ -88,7 +88,7 @@ void readStringFromConsole(int CrnStr, ConsoleColor a, ConsoleColor b)
 		coordBufCoord,  // top left dest. cell in chiBuffer 
 		&srctReadRect); // screen buffer source rectangle 
 
-	for (int i = 0; i < (ConsoleSize.X-2); i++) chiBuffer[i].Attributes = (WORD)((a << 4) | b);
+	for (int i = 0; i < (ConsoleSize.X-2); ++i) chiBuffer[i].Attributes = (WORD)((a << 4) | b);
 	fSuccess = WriteConsoleOutput(
 		hStdout, // screen buffer to write to 
 		chiBuffer,        // buffer to copy from 
@@ -136,7 +136,7 @@ void readBlockDown()
 	srctReadRect.Bottom = ConsoleSize.Y - 3; // bot. right: row 2, col 120 
 	srctReadRect.Right = ConsoleSize.X - 1;
 
-	for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
+	for (int i = 0; i < (ConsoleSize.X); ++i) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
 	fSuccess = WriteConsoleOutput(
 		hStdout, // screen buffer to write to 
 		chiBuffer,        // buffer to copy from 
@@ -515,7 +515,7 @@ void RefreshFiles(files **flast, unsigned int *fCount, int *CrntStr, int *CrntFi
 void addLog(char *message, char  *typemessage, char *extramessage = "")
 {
 	FILE *fLog;
-	if (message != "Программа запущена")
+	if (strcmp(message, "Программа запущена"))
 		for (int j = 0; j < 20; j++)
 		{
 			fLog = fopen(logFile, "a");
@@ -1116,6 +1116,41 @@ void renameWindow(char *FileName)
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
 }
+void selectDisk(int CrntStr, bool select)
+{
+	HANDLE hStdout;
+	SMALL_RECT srctReadRect;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[ConsoleSize.X - 2]; // [1][122]; 
+	COORD coordBufSize;
+	COORD coordBufCoord;												/*Чтение из консоли*/
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	chiBuffer = new CHAR_INFO[8];
+	srctReadRect.Top = ConsoleSize.Y / 2 - 13 + CrntStr;    // top left: row 2, col 1 
+	srctReadRect.Left = ConsoleSize.X / 2 - 4;
+	srctReadRect.Bottom = ConsoleSize.Y / 2 - 13 + CrntStr; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X / 2 + 4;
+	coordBufSize.Y = 1;
+	coordBufSize.X = 8;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+	if (select)
+		for (int i = 0; i < 8; i++) chiBuffer[i].Attributes = (WORD)((LightBlue << 4) | White);
+	else
+		for (int i = 0; i < 8; i++) chiBuffer[i].Attributes = (WORD)((Cyan << 4) | Yellow);
+	WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
+}
 void listDisk(bool *Disk)
 {
 	
@@ -1131,6 +1166,81 @@ void listDisk(bool *Disk)
 	}
 
 }
+void chooseDisk(bool *Disk)
+{
+	int j = 0, CrntStr = 0, kolve = 0, key = 0, podkl = 0;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[10 * 29];
+	short top = ConsoleSize.Y / 2 - 15;
+	short bottom = ConsoleSize.Y / 2 + 14;
+	short left = ConsoleSize.X / 2 - 5;
+	short right = ConsoleSize.X / 2 + 5;
+	showWindow(&chiBuffer, top, left, bottom, right, Cyan);
+	SetCursorPosition(left + 3, top + 1);
+	SetColor(Cyan, Yellow);
+	printf("Диск");
+	for (int i = 0; i < 26; ++i)
+	{
+		if (Disk[i])
+		{
+			SetCursorPosition(left + 1, top + 2 + j);
+			printf("%C:\\", (65 + i));
+			++j;
+			++kolve;
+		}
+	}
+	selectDisk(CrntStr, true);
+	do
+	{
+		key = _getch();
+		if (key == 224)
+		{
+			key = _getch();
+			switch (key)
+			{
+			case 80:
+				if (CrntStr < (kolve - 1))
+				{
+					selectDisk(CrntStr, false);
+					CrntStr++;
+					selectDisk(CrntStr, true);
+				}
+				break;
+			case 72:
+				if (CrntStr)
+				{
+					selectDisk(CrntStr, false);
+					CrntStr--;
+					selectDisk(CrntStr, true);
+				}
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (key == 13)
+		{
+			for (int i = 0; i < 26; ++i)
+			{
+				if (Disk[i])
+					++podkl;
+				if ((CrntStr + 1) == podkl)
+				{
+					char path[5] = "C:\\";
+					*path = 65 + i;
+					_chdir(path);
+					hideWindow(chiBuffer, top, left, bottom, right);
+					delete[] chiBuffer;
+					return;
+				}
+			}
+		}
+	} while (key != 27);
+	
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+}
+
 void runHEX(char *FileName, _fsize_t FileSize)
 
 {
@@ -1388,7 +1498,6 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	{
 		int a = sizeof(_finddata_t);
 		bool Disk[26];
-		listDisk(Disk);
 		getLogPath(argv);	
 		SetConsoleTitle(L"File Manager");
 		addLog("Программа запущена","INFO");
@@ -1545,7 +1654,13 @@ void runHEX(char *FileName, _fsize_t FileSize)
 				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
 				break;
 			case'u'://unhuffman
-
+				unhuffman(fCrnt->file.name);
+				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				break;
+			case 'd':
+				listDisk(Disk);
+				chooseDisk(Disk);
+				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
 				break;
 			default:
 				break;
