@@ -9,6 +9,7 @@
 #include <thread>
 #include <chrono>
 #include "huffman.h"
+#pragma pack(1)
 
 using namespace std;
 char *logFile;
@@ -1515,6 +1516,7 @@ void runHEX(char *FileName, _fsize_t FileSize)
 		searchFiles(&flast, &fCount);
 		files *fCrnt = flast;
 		show(flast, 0,FALSE);
+		
 		do
 		{
 			key = _getch();
@@ -1633,7 +1635,7 @@ void runHEX(char *FileName, _fsize_t FileSize)
 				showError("Вы нажали не на ту клавишу", "О БОЖЕ!!!");
 				addLog("Нажата клавиша ошибки", "ERROR");
 				break;
-			case 'h':
+				case 'h':
 				if (!(fCrnt->file.attrib & _A_SUBDIR))
 				{
 					runHEX(fCrnt->file.name, fCrnt->file.size);

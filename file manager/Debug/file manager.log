@@ -1,5 +1,5 @@
 ﻿  main.cpp
-c:\users\сергей\desktop\file_manager\file manager\main.cpp(295): warning C4838: conversion from 'int' to 'SHORT' requires a narrowing conversion
-c:\users\сергей\desktop\file_manager\file manager\main.cpp(493): warning C4018: '<': signed/unsigned mismatch
-c:\users\сергей\desktop\file_manager\file manager\main.cpp(1525): warning C4018: '<': signed/unsigned mismatch
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(296): warning C4838: conversion from 'int' to 'SHORT' requires a narrowing conversion
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(494): warning C4018: '<': signed/unsigned mismatch
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(1527): warning C4018: '<': signed/unsigned mismatch
   file manager.vcxproj -> C:\Users\Сергей\Desktop\file_manager\Debug\file manager.exe

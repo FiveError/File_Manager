@@ -3,6 +3,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#pragma pack(1)
 using namespace std;
 struct Node
 {
@@ -14,7 +15,7 @@ struct Node
 };
 void huffman(char * Filename)
 {
-
+	unsigned int kolvo = 0;
 	int weight[0x100];
 	for (auto &i : weight)
 		i = 0;
@@ -22,6 +23,7 @@ void huffman(char * Filename)
 		ifstream f(Filename);
 		while (!f.eof())
 		{
+			++kolvo;
 			unsigned char ch;
 			f.read((char *)&ch, sizeof(ch));
 			++weight[ch];
@@ -79,6 +81,8 @@ void huffman(char * Filename)
 	memset(Filename + strlen(Filename), 'h' , 1);
 	*(Filename + len + 1) = '\0';
 	ofstream f(Filename, ios::binary);
+	--kolvo;
+	f.write((char*)&kolvo, sizeof(kolvo));
 	int treeSize = tree.size();
 	f.write((char*)&treeSize, sizeof(treeSize));
 	for (auto i : tree)
@@ -101,6 +105,8 @@ void unhuffman(char *Filename)
 	{
 		vector<Node> tree;
 		ifstream f(Filename, ios::binary);
+		unsigned int kolvo;
+		f.read((char*)&kolvo, sizeof(kolvo));
 		int treeSize;
 		f.read((char*)&treeSize, sizeof(treeSize));
 		for (int i = 0; i < treeSize; ++i)
@@ -129,8 +135,12 @@ void unhuffman(char *Filename)
 				n = tree[n].zero;
 			if (tree[n].one == -1)
 			{
-				f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
-				n = tree.size() - 1;
+				if (kolvo--)
+				{
+					f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
+					n = tree.size() - 1;
+				}
+				else break;
 			}
 		}
 	}
