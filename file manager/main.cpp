@@ -945,7 +945,6 @@ void readBlockUpHEX()
 		&srctReadRect);  // dest. screen buffer rectangle 
 	delete[] chiBuffer;
 }
-
 void renameWindow(char *FileName)
 {
 	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * 25];
@@ -990,7 +989,7 @@ void renameWindow(char *FileName)
 					if (lchar != i) i--;
 					else
 					{
-						for (i--; i-lchar < 77; i++)
+						for (i--; (i - lchar < 77) || (i - lchar > 240); i++)
 							printf("%c", NewName[i]);
 						i -= 78;
 						lchar--;
@@ -1261,7 +1260,6 @@ void chooseDisk(bool *Disk)
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
 }
-
 void runHEX(char *FileName, _fsize_t FileSize)
 {
 	FILE *fHex, *fNew;
@@ -1582,6 +1580,31 @@ bool loadConsoleFrame(char *FileName)
 	delete[] chiBuffer;
 	return 1;
 }
+void showPath(char *FileName, char CrntPath[260])
+{
+	if ((FileName[0] == '.') && (FileName[1] == '.') && (FileName[2] == '\0'))
+	{
+		for (int i = 0; i < MAX_PATH; ++i) CrntPath[i] = '\0';
+		_getcwd(CrntPath, MAX_PATH);
+		if (CrntPath[3]) sprintf(CrntPath, "%s\\", CrntPath);
+	}
+	else sprintf(CrntPath, "%s%s\\", CrntPath, FileName);
+	if (CrntPath[ConsoleSize.X])
+	{
+		SetCursorPosition(0, ConsoleSize.Y - 2);
+		SetColor(Black, White);
+		for (int i = 0; i < ConsoleSize.X - 2; ++i) printf("%c", CrntPath[i]);
+		printf("..");
+	}
+	else
+	{
+		SetCursorPosition(0, ConsoleSize.Y - 2);
+		SetColor(Black, White);
+		for (int i = 0; i < ConsoleSize.X; ++i) printf(" ");
+		SetCursorPosition(0, ConsoleSize.Y - 2);
+		printf("%s", CrntPath);
+	}
+}
 
 	int main(int argc, const char * argv[]) 
 	{
@@ -1596,15 +1619,16 @@ bool loadConsoleFrame(char *FileName)
 		_chdir("C:\\");
 		FILE *source = NULL, *dist;
 		unsigned int fCount;
-		char buffer[260], fCopy[260], pathCopy[MAX_PATH];
+		char buffer[260], fCopy[260], pathCopy[MAX_PATH], CrntPath[MAX_PATH] = "C:\\";
+		SetCursorPosition(0, ConsoleSize.Y - 2);
+		printf("%s", CrntPath);
 		pathCopy[0] = '\0';
 		setlocale(LC_ALL, "rus");
 		int CrntStr = 0, key, CrntFile = 0;
 		files *flast = flist.next;
 		searchFiles(&flast, &fCount);
 		files *fCrnt = flast;
-		show(flast, 0,FALSE);
-		
+		show(flast, 0, FALSE);
 		do
 		{
 			key = _getch();
@@ -1658,6 +1682,7 @@ bool loadConsoleFrame(char *FileName)
 					if (!(fCrnt->file.attrib & _A_SYSTEM))
 					{
 						_chdir(fCrnt->file.name);
+						showPath(fCrnt->file.name, CrntPath);
 						addLog("Перешли в папку", "INFO", fCrnt->file.name);
 						RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
 					}
