@@ -13,6 +13,7 @@
 
 using namespace std;
 char *logFile;
+char *frameFile;
 COORD ConsoleSize = { 122,40 };
 struct files{
 	_finddata_t file;
@@ -37,6 +38,8 @@ enum ConsoleColor {
 	Yellow = 14,
 	White = 15
 };
+bool loadConsoleFrame(char *FileName);
+void ConsoleFrame();
 void EnableCursor(bool mode)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -322,6 +325,7 @@ void add(_finddata_t a, files **b)
 }
 void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x)
 {
+
 	x -= 2;
 	int FileNameLen;
 	for (FileNameLen = 0; FileName[FileNameLen]; FileNameLen++);
@@ -341,6 +345,8 @@ void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x)
 	//setlocale(LC_ALL, "C");
 	printf("%c", 166);  // 179 166
 	//setlocale(LC_ALL, "rus");
+
+
 	if (attrib & _A_SUBDIR)
 	{
 		printf("FOLDER");
@@ -387,6 +393,7 @@ void showClearStr(int x)
 }
 void show(files *first, int a, bool b)	
 {
+	if(!loadConsoleFrame(frameFile)) ConsoleFrame();
 	files *showing = first;
 	for (int i = 0; i < a; i++) showing = showing->next;
 	int i = ConsoleSize.Y - 5;
@@ -422,11 +429,11 @@ void show(files *first, int a, bool b)
 		i--;
 	}
 
-	if (i) for (; i > 0; i--)
+	/*if (i) for (; i > 0; i--)
 	{
 		SelectStr(ConsoleSize.Y - 5 - i);
 		showClearStr(ConsoleSize.X);
-	}
+	}*/
 }	
 void deleteAll(files **flast)
 {
@@ -570,13 +577,13 @@ void ConsoleFrame()
 	for (int i = 0; i < ConsoleSize.Y; ++i)
 	{
 		printf("%c", 186);
-		/*for (int j = 0; j < (5 * ConsoleSize.X / 6 - 1); ++j)
+		for (int j = 0; j < (5 * ConsoleSize.X / 6 - 1); ++j)
 			printf(" ");
 		printf("%c", 179);
 		for (int j = 0; j < (ConsoleSize.X / 6); ++j)
-			printf(" ");*/
-		for (int j = 0; j < ConsoleSize.X; ++j)
 			printf(" ");
+		//for (int j = 0; j < ConsoleSize.X; ++j)
+		//	printf(" ");
 		printf("%c", 186);
 	}
 	printf("%c", 200);
@@ -632,6 +639,15 @@ void getLogPath(const char *argv[])
 	logFile = new char[i];
 	memcpy(logFile, argv[0], i-12);
 	memcpy(logFile+i-12, "logFile.log", 12);
+}
+void getFramePath(const char *argv[])
+{
+	int i;
+	for (i = 0; argv[0][i]; ++i);
+	i -= 4;
+	frameFile = new char[i];
+	memcpy(frameFile, argv[0], i-12);
+	memcpy(frameFile + i - 12, "ConsoleFrame.txt", 17);
 }
 void ExistFile(char (*str)[260])
 {
@@ -1554,6 +1570,7 @@ void saveConsoleToFile(char *FileName)
 }
 bool loadConsoleFrame(char *FileName)
 {
+
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect; 
 	COORD coordBufSize;
@@ -1587,12 +1604,14 @@ bool loadConsoleFrame(char *FileName)
 	{
 		
 		bool Disk[26];
+		getInfo();
 		getLogPath(argv);	
+		getFramePath(argv);
 		SetConsoleTitle(L"File Manager");
 		addLog("Программа запущена","INFO");
 		SetBufferSize();
 		EnableCursor(false);
-		if (!loadConsoleFrame("ConsoleFrame.txt")) ConsoleFrame();
+		if (!loadConsoleFrame(frameFile)) ConsoleFrame();
 		_chdir("C:\\");
 		FILE *source = NULL, *dist;
 		unsigned int fCount;

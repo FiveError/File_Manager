@@ -1,5 +1,5 @@
 ﻿  main.cpp
-c:\projects\filemanager2\file manager\main.cpp(296): warning C4838: преобразование из "int" в "SHORT" требует сужающего преобразования
-c:\projects\filemanager2\file manager\main.cpp(494): warning C4018: <: несоответствие типов со знаком и без знака
-c:\projects\filemanager2\file manager\main.cpp(1615): warning C4018: <: несоответствие типов со знаком и без знака
-  file manager.vcxproj -> C:\Projects\fileManager2\Debug\file manager.exe
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(299): warning C4838: conversion from 'int' to 'SHORT' requires a narrowing conversion
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(501): warning C4018: '<': signed/unsigned mismatch
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(1607): error C3861: 'getInfo': identifier not found
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(1634): warning C4018: '<': signed/unsigned mismatch
