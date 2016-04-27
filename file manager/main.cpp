@@ -10,9 +10,9 @@
 #include <chrono>
 #include "huffman.h"
 #pragma pack(1)
-
+                                //Копирование папки саму в себя
 using namespace std;
-char *logFile;
+char *logFile, *frameFile, *clearStr;
 COORD ConsoleSize = { 122,40 };
 struct files{
 	_finddata_t file;
@@ -37,6 +37,8 @@ enum ConsoleColor {
 	Yellow = 14,
 	White = 15
 };
+bool loadConsoleFrame(char *FileName);
+void ConsoleFrame();
 void EnableCursor(bool mode)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -320,8 +322,25 @@ void add(_finddata_t a, files **b)
 	*b = adding;
 	if ((adding->next)) (*b)->next->prev = adding;
 }
-void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x)
+void saveClearStr()
 {
+	clearStr = new char[ConsoleSize.X - 1];
+	ConsoleSize.X -= 2;
+	for (int i = 0; i < (5 * ConsoleSize.X / 6 - 1); i++)
+		sprintf(clearStr+i, " ");
+	sprintf(clearStr + 5 * ConsoleSize.X / 6 - 1, "%c", 166);      //179
+	for (int i = 0; i < (ConsoleSize.X / 6); i++)
+		sprintf(clearStr + 5 * ConsoleSize.X / 6 + i, " ");
+	ConsoleSize.X += 2;
+}
+void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x, int y, bool newlist)
+{
+	if ((!newlist) || (y == 2))
+	{
+		SetCursorPosition(1, y);
+		printf("%s", clearStr);
+	}
+	SetCursorPosition(1, y);
 	x -= 2;
 	int FileNameLen;
 	for (FileNameLen = 0; FileName[FileNameLen]; FileNameLen++);
@@ -335,22 +354,15 @@ void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x)
 	{
 		for (int i = 0; FileName[i]; i++)
 			printf("%c", FileName[i]);
-		for (int i = 0; i < (5 * x / 6 - 1 - FileNameLen); i++)
-			printf(" ");
+		
 	}
-	//setlocale(LC_ALL, "C");
-	printf("%c", 166);  // 179 166
-	//setlocale(LC_ALL, "rus");
+	
+	SetCursorPosition(5*ConsoleSize.X/6, y);
+
 	if (attrib & _A_SUBDIR)
-	{
 		printf("FOLDER");
-		for (int i = 0; i < x / 6 - 6; i++)
-			printf(" ");
-	}
 	else
 	{
-		
-		
 			if (FileSize / 10000000)
 			{
 				FileSize /= 1024 * 1024;
@@ -363,45 +375,25 @@ void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x)
 					printf("%dKB", FileSize);
 				}
 				else printf("%dB ", FileSize);
-				int k = 0;
-				if (FileSize == 0) k = 1;
-				else
-					while (FileSize)
-					{
-						FileSize /= 10;
-						k++;
-					}
-				for (int i = 0; i < (x / 6 - 2 - k); i++)
-					printf(" ");
-		
+					
 	}
-}
-void showClearStr(int x)
-{
-	x -= 2;
-	for (int i = 0; i < (5 * x / 6 - 1); i++)
-		printf(" ");
-	printf("%c", 166);      //179
-	for (int i = 0; i < (x / 6); i++)
-		printf(" ");
 }
 void show(files *first, int a, bool b)	
 {
+	if(!loadConsoleFrame(frameFile)) ConsoleFrame();
 	files *showing = first;
 	for (int i = 0; i < a; i++) showing = showing->next;
 	int i = ConsoleSize.Y - 5;
 	if (!b)
 	{
 		SetColor(Cyan, White);
-		SelectStr(ConsoleSize.Y - 5 - i);
-		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
+		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
 		showing = showing->next;
 		i--;
 		SetColor(Blue, White);
 		while ((showing && i))
 		{
-			SelectStr(ConsoleSize.Y - 5 - i);
-			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
+			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
 			showing = showing->next;
 			i--;
 		}
@@ -409,23 +401,15 @@ void show(files *first, int a, bool b)
 	else
 	{
 		SetColor(Blue, White);
-		while ((showing && i-1))
+		while ((showing && i - 1))
 		{
-			SelectStr(ConsoleSize.Y - 5 - i);
-			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
+			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
 			showing = showing->next;
 			i--;
 		}
 		SetColor(Cyan, White);
-		SelectStr(ConsoleSize.Y - 5 - i);
-		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X);
+		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
 		i--;
-	}
-
-	if (i) for (; i > 0; i--)
-	{
-		SelectStr(ConsoleSize.Y - 5 - i);
-		showClearStr(ConsoleSize.X);
 	}
 }	
 void deleteAll(files **flast)
@@ -570,13 +554,13 @@ void ConsoleFrame()
 	for (int i = 0; i < ConsoleSize.Y; ++i)
 	{
 		printf("%c", 186);
-		/*for (int j = 0; j < (5 * ConsoleSize.X / 6 - 1); ++j)
+		for (int j = 0; j < (5 * ConsoleSize.X / 6 - 1); ++j)
 			printf(" ");
 		printf("%c", 179);
 		for (int j = 0; j < (ConsoleSize.X / 6); ++j)
-			printf(" ");*/
-		for (int j = 0; j < ConsoleSize.X; ++j)
 			printf(" ");
+		//for (int j = 0; j < ConsoleSize.X; ++j)
+		//	printf(" ");
 		printf("%c", 186);
 	}
 	printf("%c", 200);
@@ -632,6 +616,15 @@ void getLogPath(const char *argv[])
 	logFile = new char[i];
 	memcpy(logFile, argv[0], i-12);
 	memcpy(logFile+i-12, "logFile.log", 12);
+}
+void getFramePath(const char *argv[])
+{
+	int i;
+	for (i = 0; argv[0][i]; ++i);
+	i -= 4;
+	frameFile = new char[i];
+	memcpy(frameFile, argv[0], i-12);
+	memcpy(frameFile + i - 12, "ConsoleFrame.txt", 17);
 }
 void ExistFile(char (*str)[260])
 {
@@ -726,7 +719,11 @@ void deleteFolder(char *path)
 }
 void FolderCopy(char *path, char *fCopy)
 {
-	_mkdir(fCopy);
+	if (_mkdir(fCopy) == -1)
+	{
+		showError("Ошибка создания папки", "");
+		return;
+	}
 	_chdir(fCopy);
 	_finddata_t myfile;  intptr_t p;
 	int k1, k2;
@@ -744,10 +741,10 @@ void FolderCopy(char *path, char *fCopy)
 		sprintf(pathCopy, "%s\\%s", path, myfile.name);
 		if (myfile.attrib & _A_SUBDIR) FolderCopy(pathCopy, myfile.name);
 		else {
-			source = fopen(pathCopy, "r+b");
+			source = fopen(pathCopy, "rb");
 			if (source != NULL)
 			{
-				dist = fopen(myfile.name, "w+b");
+				dist = fopen(myfile.name, "wb");
 				FileCopy(source, dist);
 				fclose(source);
 				fclose(dist);
@@ -1552,6 +1549,7 @@ void saveConsoleToFile(char *FileName)
 }
 bool loadConsoleFrame(char *FileName)
 {
+
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect; 
 	COORD coordBufSize;
@@ -1580,7 +1578,7 @@ bool loadConsoleFrame(char *FileName)
 	delete[] chiBuffer;
 	return 1;
 }
-void showPath(char *FileName, char CrntPath[260])
+void savePath(char *FileName, char CrntPath[260])
 {
 	if ((FileName[0] == '.') && (FileName[1] == '.') && (FileName[2] == '\0'))
 	{
@@ -1589,6 +1587,9 @@ void showPath(char *FileName, char CrntPath[260])
 		if (CrntPath[3]) sprintf(CrntPath, "%s\\", CrntPath);
 	}
 	else sprintf(CrntPath, "%s%s\\", CrntPath, FileName);
+}
+void showPath(char CrntPath[260])
+{
 	if (CrntPath[ConsoleSize.X])
 	{
 		SetCursorPosition(0, ConsoleSize.Y - 2);
@@ -1605,17 +1606,82 @@ void showPath(char *FileName, char CrntPath[260])
 		printf("%s", CrntPath);
 	}
 }
+bool exitFM()
+{
+	short top = ConsoleSize.Y / 2 - 3;
+	short bottom = ConsoleSize.Y / 2 + 2;
+	short left = ConsoleSize.X / 2 - 31;
+	short right = ConsoleSize.X / 2 + 31;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[7 * 62];
+	showWindow(&chiBuffer, top, left, bottom, right, Green);
+	SetCursorPosition(left + 20, top + 1);
+	printf("Вы хотите выйти?");
+	SetCursorPosition(left + 8, top + 3);
+	SetColor(White, Green);
+	printf("  Да  ");
+	SetCursorPosition(left + 48, top + 3);
+	SetColor(Green, White);
+	printf("  Нет  ");
+	bool yes = TRUE;
+	unsigned char key;
+	do
+	{
+		key = _getch();
+		if (key == 224) 
+		{
+			key = _getch();
+			switch (key)
+			{
+			case 75: yes = TRUE;
+				break;
+			case 77: yes = FALSE;
+				break;
+			default:
+				break;
+			}
+		}
+		if (key == 27)
+		{
+			yes = false;
+			break;
+		}
+		if (yes)
+		{
+			SetCursorPosition(left + 8, top + 3);
+			SetColor(White, Green);
+			printf("  Да  ");
+			SetCursorPosition(left + 48, top + 3);
+			SetColor(Green, White);
+			printf("  Нет  ");
+		}
+		else
+		{
+			SetCursorPosition(left + 8, top + 3);
+			SetColor(Green, White);
+			printf("  Да  ");
+			SetCursorPosition(left + 48, top + 3);
+			SetColor(White, Green);
+			printf("  Нет  ");
+		}
+	} while (key != 13);
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+	return yes;
+
+}
 
 	int main(int argc, const char * argv[]) 
 	{
 		
-		bool Disk[26];
+		bool Disk[26], error;
 		getLogPath(argv);	
+		getFramePath(argv);
+		saveClearStr();
 		SetConsoleTitle(L"File Manager");
 		addLog("Программа запущена","INFO");
 		SetBufferSize();
 		EnableCursor(false);
-		if (!loadConsoleFrame("ConsoleFrame.txt")) ConsoleFrame();
+		if (!loadConsoleFrame(frameFile)) ConsoleFrame();
 		_chdir("C:\\");
 		FILE *source = NULL, *dist;
 		unsigned int fCount;
@@ -1629,6 +1695,7 @@ void showPath(char *FileName, char CrntPath[260])
 		searchFiles(&flast, &fCount);
 		files *fCrnt = flast;
 		show(flast, 0, FALSE);
+		showPath(CrntPath);
 		do
 		{
 			key = _getch();
@@ -1645,7 +1712,7 @@ void showPath(char *FileName, char CrntPath[260])
 						CrntFile++;
 						SelectStr(CrntStr);
 						SetColor(Cyan, White);
-						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X);
+						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, ConsoleSize.Y - 4, FALSE);
 					}
 					else
 					{
@@ -1664,7 +1731,7 @@ void showPath(char *FileName, char CrntPath[260])
 						CrntFile--;
 						SelectStr(CrntStr);
 						SetColor(Cyan, White);
-						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X);
+						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, 2, FALSE);
 					}
 					else
 					{
@@ -1682,9 +1749,10 @@ void showPath(char *FileName, char CrntPath[260])
 					if (!(fCrnt->file.attrib & _A_SYSTEM))
 					{
 						_chdir(fCrnt->file.name);
-						showPath(fCrnt->file.name, CrntPath);
+						savePath(fCrnt->file.name, CrntPath);
 						addLog("Перешли в папку", "INFO", fCrnt->file.name);
 						RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+						showPath(CrntPath);
 					}
 					else showError("У вас нет доступа к данной папке", "");
 				}
@@ -1700,7 +1768,9 @@ void showPath(char *FileName, char CrntPath[260])
 				break;
 			case 8:
 				_chdir("..");
+				savePath("..", CrntPath);
 				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				showPath(CrntPath);
 				break;
 			case 0:
 				key = _getch();
@@ -1720,9 +1790,13 @@ void showPath(char *FileName, char CrntPath[260])
 					memcpy(fCopy, fCrnt->file.name, 260);
 					if (fCrnt->file.attrib & _A_SUBDIR)
 					{
-						_chdir(fCopy);
-						_getcwd(pathCopy, MAX_PATH);
-						_chdir("..");
+						if (!(fCrnt->file.attrib & _A_SYSTEM))
+						{
+							_chdir(fCopy);
+							_getcwd(pathCopy, MAX_PATH);
+							_chdir("..");
+						}
+						else showError("У вас нет доступа к копированию данной папки", "");
 					}
 					else
 					{
@@ -1738,20 +1812,34 @@ void showPath(char *FileName, char CrntPath[260])
 				case 62:
 					if (source != NULL)
 					{
-						dist = fopen(fCopy, "r+b");
+						dist = fopen(fCopy, "rb");
 						memcpy(buffer, fCopy, 260);
 						if (dist != NULL)
 						{
 							fclose(dist);
 							ExistFile(&fCopy);
 						}
-						dist = fopen(fCopy, "w+b");
+						dist = fopen(fCopy, "wb");
 						FileCopy(source, dist);
 						fclose(dist);
 						memcpy(fCopy, buffer, 260);
 						addLog(fCopy, "COPY", "Успешно скопирован");
 					}
-					if (pathCopy[0]) FolderCopy(pathCopy, fCopy);
+					if (pathCopy[0])
+					{
+						error = TRUE;
+						for (int i = 0; pathCopy[i]; i++)
+						{
+							if (pathCopy[i] != CrntPath[i])
+							{
+								FolderCopy(pathCopy, fCopy);
+								error = FALSE;
+								break;
+							}
+						}
+						if (error) showError("Нельзя копировать папку в дочернюю", "");
+
+					}
 					RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
 					addLog(fCopy, "COPY", "Успешно скопирован");
 					break;
@@ -1791,6 +1879,8 @@ void showPath(char *FileName, char CrntPath[260])
 					break;
 				}
 				break;
+			case 27:
+				if (!exitFM()) key = 1;
 			default:
 				break;
 			}
@@ -1798,5 +1888,6 @@ void showPath(char *FileName, char CrntPath[260])
 		if (source != NULL) fclose(source);
 		addLog("Программа выключена","INFO");
 		delete[] logFile;
+		delete[] clearStr;
 		return 0;
 	}
