@@ -21,6 +21,21 @@
     <ClInclude Include="huffman.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fwin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Globals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ffiles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fhex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="file manager.rc">
@@ -32,6 +47,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="huffman.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fwin.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ffiles.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="fhex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

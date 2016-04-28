@@ -146,6 +146,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ffiles.h" />
+    <ClInclude Include="fhex.h" />
+    <ClInclude Include="Globals.h" />
+    <ClInclude Include="fm.h" />
+    <ClInclude Include="fwin.h" />
     <ClInclude Include="huffman.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
@@ -153,6 +158,10 @@
     <ResourceCompile Include="file manager.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ffiles.cpp" />
+    <ClCompile Include="fhex.cpp" />
+    <ClCompile Include="fm.cpp" />
+    <ClCompile Include="fwin.cpp" />
     <ClCompile Include="huffman.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

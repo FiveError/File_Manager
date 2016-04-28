@@ -1,6 +1,9 @@
-﻿  main.cpp
-c:\users\сергей\desktop\file_manager\file manager\main.cpp(298): warning C4838: conversion from 'int' to 'SHORT' requires a narrowing conversion
-c:\users\сергей\desktop\file_manager\file manager\main.cpp(478): warning C4018: '<': signed/unsigned mismatch
-c:\users\сергей\desktop\file_manager\file manager\main.cpp(1312): warning C4267: '=': conversion from 'size_t' to 'unsigned char', possible loss of data
-c:\users\сергей\desktop\file_manager\file manager\main.cpp(1719): warning C4018: '<': signed/unsigned mismatch
+﻿  fhex.cpp
+c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(253): warning C4267: '=': conversion from 'size_t' to 'unsigned char', possible loss of data
+  Generating Code...
+  Compiling...
+  main.cpp
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(26): warning C4838: conversion from 'int' to 'SHORT' requires a narrowing conversion
+c:\users\сергей\desktop\file_manager\file manager\main.cpp(162): warning C4018: '<': signed/unsigned mismatch
+  Generating Code...
   file manager.vcxproj -> C:\Users\Сергей\Desktop\file_manager\Debug\file manager.exe
