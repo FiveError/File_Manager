@@ -13,7 +13,7 @@
                                
 using namespace std;
 char *logFile, *frameFile, *clearStr;
-COORD ConsoleSize = { 122,40 };
+COORD ConsoleSize = { 80,25 };
 struct files{
 	_finddata_t file;
 	files *prev;
