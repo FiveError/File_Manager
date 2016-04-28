@@ -10,10 +10,10 @@
 #include <chrono>
 #include "huffman.h"
 #pragma pack(1)
-                                //Копирование папки саму в себя
+                               
 using namespace std;
 char *logFile, *frameFile, *clearStr;
-COORD ConsoleSize = { 122,40 };
+COORD ConsoleSize = { 80,25 };
 struct files{
 	_finddata_t file;
 	files *prev;
@@ -622,9 +622,9 @@ void getFramePath(const char *argv[])
 	int i;
 	for (i = 0; argv[0][i]; ++i);
 	i -= 4;
-	frameFile = new char[i];
-	memcpy(frameFile, argv[0], i-12);
-	memcpy(frameFile + i - 12, "ConsoleFrame.txt", 17);
+	frameFile = new char[i + 11];
+	memcpy(frameFile, argv[0], i - 12);
+	sprintf(frameFile + i - 12, "ConsoleFrame%03dx%d.txt", ConsoleSize.X, ConsoleSize.Y);
 }
 void ExistFile(char (*str)[260])
 {
@@ -1263,7 +1263,6 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	fHex = fopen(FileName, "r+b");
 	if (!fHex)
 	{
-		rename("BufferFile", FileName);
 		showError("У вас нет доступа к чтению данного файла", "");
 		return;
 	}
@@ -1276,13 +1275,8 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	showWindow(&chiBuffer, top, left, bottom, right, Magenta);
 	unsigned int lastAdress = FileSize / 16;
 	int lastStl;
-	if (FileSize % 16 < 16) lastStl = FileSize % 16 + 1;
-	else
-	{
-		lastStl = 1;
-		lastAdress++;
-	}
-	unsigned char c;
+	if (FileSize % 16 < 16) lastStl = FileSize % 16;
+	unsigned char c, ch[16];
 	bool secondChar = false; 
 	rename(FileName, "BufferFile");
 	fHex = fopen("BufferFile", "r+b");
@@ -1298,7 +1292,7 @@ void runHEX(char *FileName, _fsize_t FileSize)
 		SetCursorPosition(left + 1, top + 2 + adress);
 		SetColor(Magenta, Yellow);
 		printf("%08X", adress);
-		for (int i = 0; i < 16; i++)
+		/*for (int i = 0; i < 16; i++)
 		{
 			fread(&c, sizeof(char), 1, fHex);
 			if (feof(fHex)) break;
@@ -1310,7 +1304,20 @@ void runHEX(char *FileName, _fsize_t FileSize)
 			if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
 			else
 				printf("%c", c);
-		}
+		}*/
+		//c = fread(ch, 16, sizeof(char), fHex);
+		c = fread(ch, sizeof(char), 16, fHex);
+		if (!c) break;
+		SetCursorPosition(left + 11, top + 2 + adress);
+		SetColor(Magenta, White);
+		for (int i = 0; i < c; i++)
+			printf("%02X ", ch[i]);
+		printf(" ");
+		SetColor(Magenta, Yellow);
+		for (int i = 0; i < c; i++)
+			if (((ch[i] >= 0x00) && (ch[i] <= 0x0f)) || (ch[i] == 0x95)) printf(".");
+			else
+				printf("%c", ch[i]);
 	}
 	adress = 0;
 	int key, CrntStr = 0, CrntStl = 0;
@@ -1421,10 +1428,6 @@ void runHEX(char *FileName, _fsize_t FileSize)
 				break;
 			}
 			secondChar = false;
-		}
-		if (key == 8)
-		{
-
 		}
 		if (((key >= '0') && (key <= '9')) || ((key >= 'a') && (key <= 'f')))
 		{
@@ -1549,7 +1552,6 @@ void saveConsoleToFile(char *FileName)
 }
 bool loadConsoleFrame(char *FileName)
 {
-
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect; 
 	COORD coordBufSize;
@@ -1669,28 +1671,30 @@ bool exitFM()
 	return yes;
 
 }
+void preOptions(const char *argv[])
+{
+	getLogPath(argv);
+	getFramePath(argv);
+	saveClearStr();
+	SetBufferSize();
+	SetConsoleTitle(L"File Manager");
+	addLog("Программа запущена", "INFO");
+	EnableCursor(false);
+	_chdir("C:\\");
+	setlocale(LC_ALL, "rus");
+}
 
 	int main(int argc, const char * argv[]) 
-	{
-		
+	{	
+		preOptions(argv);                             
+		//ConsoleFrame();
+		//saveConsoleToFile("ConsoleFrame.txt");
 		bool Disk[26], error;
-		getLogPath(argv);	
-		getFramePath(argv);
-		saveClearStr();
-		SetConsoleTitle(L"File Manager");
-		addLog("Программа запущена","INFO");
-		SetBufferSize();
-		EnableCursor(false);
-		if (!loadConsoleFrame(frameFile)) ConsoleFrame();
-		_chdir("C:\\");
-		FILE *source = NULL, *dist;
 		unsigned int fCount;
 		char buffer[260], fCopy[260], pathCopy[MAX_PATH], CrntPath[MAX_PATH] = "C:\\";
-		SetCursorPosition(0, ConsoleSize.Y - 2);
-		printf("%s", CrntPath);
 		pathCopy[0] = '\0';
-		setlocale(LC_ALL, "rus");
 		int CrntStr = 0, key, CrntFile = 0;
+		FILE *source = NULL, *dist;
 		files *flast = flist.next;
 		searchFiles(&flast, &fCount);
 		files *fCrnt = flast;
@@ -1889,5 +1893,6 @@ bool exitFM()
 		addLog("Программа выключена","INFO");
 		delete[] logFile;
 		delete[] clearStr;
+		delete[] frameFile;
 		return 0;
 	}

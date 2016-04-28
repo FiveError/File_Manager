@@ -1,5 +1,6 @@
 ﻿  main.cpp
 c:\projects\filemanager2\file manager\main.cpp(298): warning C4838: преобразование из "int" в "SHORT" требует сужающего преобразования
 c:\projects\filemanager2\file manager\main.cpp(478): warning C4018: <: несоответствие типов со знаком и без знака
-c:\projects\filemanager2\file manager\main.cpp(1706): warning C4018: <: несоответствие типов со знаком и без знака
+c:\projects\filemanager2\file manager\main.cpp(1309): warning C4267: =: преобразование из "size_t" в "unsigned char"; возможна потеря данных
+c:\projects\filemanager2\file manager\main.cpp(1710): warning C4018: <: несоответствие типов со знаком и без знака
   file manager.vcxproj -> C:\Projects\fileManager2\Debug\file manager.exe
