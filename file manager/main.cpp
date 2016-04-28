@@ -13,7 +13,7 @@
                                
 using namespace std;
 char *logFile, *frameFile, *clearStr;
-COORD ConsoleSize = { 80,25 };
+COORD ConsoleSize = { 206,70 };
 struct files{
 	_finddata_t file;
 	files *prev;
@@ -529,6 +529,8 @@ void addLog(char *message, char  *typemessage, char *extramessage = "")
 }
 void ConsoleFrame()
 {
+	SetCursorPosition(0, 0);
+	setlocale(LC_CTYPE, "C");
 	SetColor(Blue, White);
 	ConsoleSize.X -= 2;
 	printf("%c", 201);
@@ -607,6 +609,7 @@ void ConsoleFrame()
 	printf(" ");
 	SetColor(Red, White);
 	printf("F9-DELETE");
+	setlocale(LC_CTYPE, "RUS");
 }
 void getLogPath(const char *argv[])
 {
@@ -622,9 +625,9 @@ void getFramePath(const char *argv[])
 	int i;
 	for (i = 0; argv[0][i]; ++i);
 	i -= 4;
-	frameFile = new char[i + 11];
+	frameFile = new char[i + 20];
 	memcpy(frameFile, argv[0], i - 12);
-	sprintf(frameFile + i - 12, "ConsoleFrame%03dx%d.txt", ConsoleSize.X, ConsoleSize.Y);
+	sprintf(frameFile + i - 12, "Settings\\ConsoleFrame%03dx%d.txt", ConsoleSize.X, ConsoleSize.Y);
 }
 void ExistFile(char (*str)[260])
 {
@@ -1675,8 +1678,14 @@ void preOptions(const char *argv[])
 {
 	getLogPath(argv);
 	getFramePath(argv);
-	saveClearStr();
 	SetBufferSize();
+	saveClearStr();
+	if (!fopen(frameFile, "r"))
+	{
+		ConsoleFrame();
+		saveConsoleToFile(frameFile);
+	}
+	
 	SetConsoleTitle(L"File Manager");
 	addLog("Программа запущена", "INFO");
 	EnableCursor(false);
