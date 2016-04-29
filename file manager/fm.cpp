@@ -126,6 +126,7 @@ void ConsoleFrame()
 	printf(" ");
 	SetColor(Red, White);
 	printf("F8-UNARCH");
+	if (ConsoleSize.X == 80) return;
 	SetColor(Black, White);
 	printf(" ");
 	SetColor(Red, White);

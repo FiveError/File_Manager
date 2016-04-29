@@ -14,4 +14,4 @@ void showError(char * buffer1, char * buffer2);
 void selectDisk(int CrntStr, bool select);
 void listDisk(bool * Disk);
 void chooseDisk(bool * Disk);
-void ConsoleFrame()
+void ConsoleFrame();

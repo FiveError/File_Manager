@@ -94,37 +94,20 @@ void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x, int 
 
 	}
 }
-void show(files *first, int a, bool b)
+void show(files *first)
 {
 	if (!loadConsoleFrame(frameFile)) ConsoleFrame();
 	files *showing = first;
-	for (int i = 0; i < a; i++) showing = showing->next;
 	int i = ConsoleSize.Y - 5;
-	if (!b)
+	SetColor(Cyan, White);
+	showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
+	showing = showing->next;
+	i--;
+	SetColor(Blue, White);
+	while ((showing && i))
 	{
-		SetColor(Cyan, White);
 		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
 		showing = showing->next;
-		i--;
-		SetColor(Blue, White);
-		while ((showing && i))
-		{
-			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
-			showing = showing->next;
-			i--;
-		}
-	}
-	else
-	{
-		SetColor(Blue, White);
-		while ((showing && i - 1))
-		{
-			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
-			showing = showing->next;
-			i--;
-		}
-		SetColor(Cyan, White);
-		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
 		i--;
 	}
 }
@@ -158,25 +141,19 @@ void sortAlph(files **flast)
 	}
 	deleteAll(flast);
 	*flast = sortFiles;
+	(*flast)->prev = NULL;
 	pointer = flist.next;
 	flist.next = slist.next;
 	slist.next = pointer;
 }
-void searchFiles(files **flast, unsigned int *a) // принимает два параметра: путь и указатель на начало списка
+void searchFiles(files **flast)
 {
-	*a = 0;
 	struct _finddata_t myfile;  intptr_t p;
 	p = _findfirst("*.*", &myfile);
 	if ((p != -1) && (myfile.name[0] != '.') && (myfile.name[1] != '\0'))
-	{
 		addFiles(myfile, flast);
-		(*a)++;
-	}
 	while (_findnext(p, &myfile) != -1)
-	{
 		addFiles(myfile, flast);
-		(*a)++;
-	}
 	_findclose(p);
 	sortAlph(flast);
 }
@@ -204,13 +181,12 @@ void FileCopy(FILE *source, FILE *dist)
 	fwrite(buffer, ost, sizeof(char), dist);
 	delete[] buffer;
 }
-void RefreshFiles(files **flast, unsigned int *fCount, int *CrntStr, int *CrntFile, files **fCrnt)
+void RefreshFiles(files **flast, int *CrntStr, files **fCrnt)
 {
 	deleteAll(flast);
-	searchFiles(flast, fCount);
-	show(*flast, 0, FALSE);
+	searchFiles(flast);
+	show(*flast);
 	*CrntStr = 0;
-	*CrntFile = 0;
 	*fCrnt = *flast;
 }
 void addLog(char *message, char  *typemessage, char *extramessage )

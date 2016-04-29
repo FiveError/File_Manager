@@ -20,12 +20,6 @@ using namespace std;
  char *logFile, *frameFile, *clearStr;
  COORD ConsoleSize = { 122,40 };
 
- void SelectStr(int a)
- {
- 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD position = { 1, a + 2 };
- 	SetConsoleCursorPosition(hConsole, position);
- }
 void savePath(char *FileName, char CrntPath[260])
 {
 	if ((FileName[0] == '.') && (FileName[1] == '.') && (FileName[2] == '\0'))
@@ -139,18 +133,15 @@ void preOptions(const char *argv[])
 int main(int argc, const char * argv[]) 
 	{
 		preOptions(argv);                             
-		//ConsoleFrame();
-		//saveConsoleToFile("ConsoleFrame.txt");
 		bool Disk[26], error;
-		unsigned int fCount;
 		char buffer[260], fCopy[260], pathCopy[MAX_PATH], CrntPath[MAX_PATH] = "C:\\";
 		pathCopy[0] = '\0';
-		int CrntStr = 0, key, CrntFile = 0;
+		int CrntStr = 0, key;
 		FILE *source = NULL, *dist;
 		files *flast = flist.next;
-		searchFiles(&flast, &fCount);
+		searchFiles(&flast);
 		files *fCrnt = flast;
-		show(flast, 0, FALSE);
+		show(flast);
 		showPath(CrntPath);
 		do
 		{
@@ -159,14 +150,12 @@ int main(int argc, const char * argv[])
 			{
 			case 224:
 				key = _getch();
-				if ((key == 80) && (CrntFile < (fCount - 1)))
+				if ((key == 80) && (fCrnt->next))
 				{
 					fCrnt = fCrnt->next;
 					if (CrntStr + 1 == (ConsoleSize.Y - 5))
 					{
 						readBlockUp();
-						CrntFile++;
-						SelectStr(CrntStr);
 						SetColor(Cyan, White);
 						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, ConsoleSize.Y - 4, FALSE);
 					}
@@ -174,18 +163,14 @@ int main(int argc, const char * argv[])
 					{
 						readStringFromConsole(CrntStr, Blue, White);
 						CrntStr++;
-						CrntFile++;
-						SelectStr(CrntStr);
 						readStringFromConsole(CrntStr, Cyan, White);
 					}
 				}
-				if ((key == 72) && (CrntFile)) {
+				if ((key == 72) && (fCrnt->prev)) {
 					fCrnt = fCrnt->prev;
 					if (!CrntStr)
 					{
 						readBlockDown();
-						CrntFile--;
-						SelectStr(CrntStr);
 						SetColor(Cyan, White);
 						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, 2, FALSE);
 					}
@@ -193,8 +178,6 @@ int main(int argc, const char * argv[])
 					{
 						readStringFromConsole(CrntStr, Blue, White);
 						CrntStr--;
-						CrntFile--;
-						SelectStr(CrntStr);
 						readStringFromConsole(CrntStr, Cyan, White);
 					}
 				}
@@ -207,25 +190,22 @@ int main(int argc, const char * argv[])
 						_chdir(fCrnt->file.name);
 						savePath(fCrnt->file.name, CrntPath);
 						addLog("Перешли в папку", "INFO", fCrnt->file.name);
-						RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+						RefreshFiles(&flast, &CrntStr, &fCrnt);
 						showPath(CrntPath);
 					}
 					else showError("У вас нет доступа к данной папке", "");
 				}
 				else
 				{
-					if (!(fCrnt->file.attrib & _A_SYSTEM))
-					{
-						runHEX(fCrnt->file.name, fCrnt->file.size);
-						addLog(fCrnt->file.name, "INFO", "Открыт в HEX редакторе");
-					}
-					else showError("У вас нет доступа к данному файлу", "");
+
+					runHEX(fCrnt->file.name, fCrnt->file.size);
+					addLog(fCrnt->file.name, "INFO", "Открыт в HEX редакторе");
 				}
 				break;
 			case 8:
 				_chdir("..");
 				savePath("..", CrntPath);
-				RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+				RefreshFiles(&flast, &CrntStr, &fCrnt);
 				showPath(CrntPath);
 				break;
 			case 0:
@@ -238,7 +218,7 @@ int main(int argc, const char * argv[])
 					break;
 				case 60:
 					renameWindow(fCrnt->file.name);
-					RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
 				case 61:
 					if (source != NULL) fclose(source);
@@ -296,26 +276,26 @@ int main(int argc, const char * argv[])
 						if (error) showError("Нельзя копировать папку в дочернюю", "");
 
 					}
-					RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					addLog(fCopy, "COPY", "Успешно скопирован");
 					break;
 				case 63:
 					newFolder();
 					addLog("Созданна новая папка", "INFO");
-					RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+					RefreshFiles(&flast, &CrntStr, &fCrnt);;
 					break;
 				case 64:
 					listDisk(Disk);
 					chooseDisk(Disk);
-					RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
 				case 65:
 					huffman(fCrnt->file.name);
-					RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
 				case 66: 
 					unhuffman(fCrnt->file.name);
-					RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
 				case 67:
 					if ((fCrnt->file.name[0] == '.') && (fCrnt->file.name[1] == '.') && (fCrnt->file.name[2] == '\0')) showError("Путь назад невозможно удалить", "");
@@ -329,7 +309,7 @@ int main(int argc, const char * argv[])
 						else
 							if (remove(fCrnt->file.name) == -1) showError("Данный файл не может быть удален", "");
 							else addLog(fCrnt->file.name, "INFO", "Удален");
-							RefreshFiles(&flast, &fCount, &CrntStr, &CrntFile, &fCrnt);
+							RefreshFiles(&flast, &CrntStr, &fCrnt);
 					}
 				default:
 					break;
