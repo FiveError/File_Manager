@@ -6,3 +6,4 @@ void SetColor(ConsoleColor a, ConsoleColor b);
 void SetCursorPosition(short x, short y);
 void readBlockDown();
 void readBlockUp();
+void deleteBlockUp(int CrntStr);

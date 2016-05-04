@@ -1,2 +1,3 @@
 ﻿  main.cpp
+cl : командная строка warning D9028: сбой минимальной повторной сборки, возврат к обычной сборке
   file manager.vcxproj -> C:\Projects\fileManager2\Debug\file manager.exe

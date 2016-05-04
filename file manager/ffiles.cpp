@@ -70,9 +70,7 @@ void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x, int 
 	{
 		for (int i = 0; FileName[i]; i++)
 			printf("%c", FileName[i]);
-
 	}
-
 	SetCursorPosition(5 * ConsoleSize.X / 6, y);
 
 	if (attrib & _A_SUBDIR)
@@ -111,6 +109,62 @@ void show(files *first)
 		i--;
 	}
 }
+void show(files * first, int *CrntStr)
+{
+	if (!loadConsoleFrame(frameFile)) ConsoleFrame();
+	files *showing = first;
+	int i = ConsoleSize.Y - 5;
+	if (*CrntStr < i)
+	{
+		SetColor(Blue, White);
+		while ((showing && i))
+		{
+			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
+			showing = showing->next;
+			i--;
+		}
+		readStringFromConsole(*CrntStr, Cyan, White);
+	}
+	else
+	{
+		for (; *CrntStr >= i; (*CrntStr)--)
+			showing = showing->next;
+		SetColor(Blue, White);
+		while (i-1)
+		{
+			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
+			showing = showing->next;
+			i--;
+		}
+		SetColor(Cyan, White);
+		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 4, FALSE);
+	}
+}
+void showLastStr(files * fCrnt, int CrntStr)
+{
+	SetColor(Blue, White);
+	CrntStr++;
+	while (CrntStr < ConsoleSize.Y - 5)
+	{
+		if (!fCrnt->next)
+		{
+			SetCursorPosition(1, ConsoleSize.Y - 4);
+			printf("%s", clearStr);
+			return;
+		}
+		fCrnt = fCrnt->next;
+		CrntStr++;
+	}
+	showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, ConsoleSize.Y - 4, FALSE);
+}
+void deleteElement(files ** fCrnt)
+{
+	files *del = *fCrnt;
+	(*fCrnt)->prev->next = (*fCrnt)->next;
+	(*fCrnt)->next->prev = (*fCrnt)->prev;
+	*fCrnt = (*fCrnt)->prev;
+	delete del;
+}
 void deleteAll(files **flast)
 {
 	files *t = *flast;
@@ -146,6 +200,53 @@ void sortAlph(files **flast)
 	flist.next = slist.next;
 	slist.next = pointer;
 }
+void sortAlph(files ** flast, int * CrntStr, files ** fCrnt, char ** prevPath)
+{
+	files *pointer = *flast;
+	files *sortFiles = slist.next;
+	*CrntStr = 0;
+	int length = 0;
+	for (; (*prevPath)[length]; length++);
+	bool b = false;
+	while (pointer)
+	{
+		if (pointer->file.attrib & _A_SUBDIR)
+		{
+			addFiles(pointer->file, &sortFiles);
+			if (!b)
+			{
+				b = TRUE;
+				if (pointer->file.name[length]) b = FALSE;
+				else
+					for (int i = 0; i <= length; i++)
+						if (pointer->file.name[i] != (*prevPath)[i])
+						{
+							b = FALSE;
+							break;
+						}						
+				if (b)
+				{
+					*fCrnt = sortFiles;
+					while ((*fCrnt)->next) *fCrnt = (*fCrnt)->next;
+				}
+				else (*CrntStr)++;
+			}
+		}
+		pointer = pointer->next;
+	}
+	pointer = *flast;
+	while (pointer)
+	{
+		if (!(pointer->file.attrib & _A_SUBDIR)) addFiles(pointer->file, &sortFiles);
+		pointer = pointer->next;
+	}
+	deleteAll(flast);
+	*flast = sortFiles;
+	(*flast)->prev = NULL;
+	pointer = flist.next;
+	flist.next = slist.next;
+	slist.next = pointer;
+}
 void searchFiles(files **flast)
 {
 	struct _finddata_t myfile;  intptr_t p;
@@ -156,6 +257,17 @@ void searchFiles(files **flast)
 		addFiles(myfile, flast);
 	_findclose(p);
 	sortAlph(flast);
+}
+void searchFiles(files ** flast, int * CrntStr, files ** fCrnt, char ** prevPath)
+{
+	struct _finddata_t myfile;  intptr_t p;
+	p = _findfirst("*.*", &myfile);
+	if ((p != -1) && (myfile.name[0] != '.') && (myfile.name[1] != '\0'))
+		addFiles(myfile, flast);
+	while (_findnext(p, &myfile) != -1)
+		addFiles(myfile, flast);
+	_findclose(p);
+	sortAlph(flast, CrntStr, fCrnt, prevPath);
 }
 void FileCopy(FILE *source, FILE *dist)
 {
@@ -188,6 +300,14 @@ void RefreshFiles(files **flast, int *CrntStr, files **fCrnt)
 	show(*flast);
 	*CrntStr = 0;
 	*fCrnt = *flast;
+}
+void RefreshFiles(files ** flast, int * CrntStr, files ** fCrnt, char ** prevPath)
+{
+	deleteAll(flast);
+	searchFiles(flast, CrntStr, fCrnt, prevPath);
+	show(*flast, CrntStr);
+	delete[] (*prevPath);
+	*prevPath = NULL;
 }
 void addLog(char *message, char  *typemessage, char *extramessage )
 {
@@ -260,24 +380,14 @@ void ExistFile(char(*str)[260])
 }
 void newFolder()
 {
-	char str[25];
 	int i = 1;
 	char str1[] = "Новая папка";
-	if (_chdir(str1))
-	{
-		_mkdir(str1);
-		return;
-	}
-	_chdir("..");
+	if (!_mkdir(str1)) return;
+	char str[25];
 	while (1)
 	{
 		sprintf(str, "%s(%d)", str1, i);
-		if (_chdir(str))
-		{
-			_mkdir(str);
-			return;
-		}
-		_chdir("..");
+		if (!_mkdir(str)) return;
 		i++;
 	}
 }

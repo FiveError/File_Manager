@@ -20,11 +20,17 @@ using namespace std;
  char *logFile, *frameFile, *clearStr;
  COORD ConsoleSize = { 122,40 };
 
-void savePath(char *FileName, char CrntPath[260])
+void savePath(char *FileName, char CrntPath[260], char **prevPath)
 {
 	if ((FileName[0] == '.') && (FileName[1] == '.') && (FileName[2] == '\0'))
 	{
-		for (int i = 0; i < MAX_PATH; ++i) CrntPath[i] = '\0';
+		int i = 3, j = 0;
+		for (; CrntPath[i]; i++);
+		for (j = i - 2; (CrntPath[j] != '\\'); j--);
+		*prevPath = new char[i - j - 1];
+		memcpy(*prevPath, CrntPath + j + 1, i - j - 1);
+		(*prevPath)[i - j - 2] = '\0';
+		for (i = 0; i < MAX_PATH; ++i) CrntPath[i] = '\0';
 		_getcwd(CrntPath, MAX_PATH);
 		if (CrntPath[3]) sprintf(CrntPath, "%s\\", CrntPath);
 	}
@@ -48,21 +54,21 @@ void showPath(char CrntPath[260])
 		printf("%s", CrntPath);
 	}
 }
-bool exitFM()
+bool exitFM(char * buffer, ConsoleColor background)
 {
 	short top = ConsoleSize.Y / 2 - 3;
 	short bottom = ConsoleSize.Y / 2 + 2;
 	short left = ConsoleSize.X / 2 - 31;
 	short right = ConsoleSize.X / 2 + 31;
 	CHAR_INFO *chiBuffer = new CHAR_INFO[7 * 62];
-	showWindow(&chiBuffer, top, left, bottom, right, Green);
-	SetCursorPosition(left + 20, top + 1);
-	printf("Вы хотите выйти?");
+	showWindow(&chiBuffer, top, left, bottom, right, background);
+	SetCursorPosition(left + 18, top + 1);
+	printf("%s",buffer);
 	SetCursorPosition(left + 8, top + 3);
-	SetColor(White, Green);
+	SetColor(White, background);
 	printf("  Да  ");
 	SetCursorPosition(left + 48, top + 3);
-	SetColor(Green, White);
+	SetColor(background, White);
 	printf("  Нет  ");
 	bool yes = TRUE;
 	unsigned char key;
@@ -90,19 +96,19 @@ bool exitFM()
 		if (yes)
 		{
 			SetCursorPosition(left + 8, top + 3);
-			SetColor(White, Green);
+			SetColor(White, background);
 			printf("  Да  ");
 			SetCursorPosition(left + 48, top + 3);
-			SetColor(Green, White);
+			SetColor(background, White);
 			printf("  Нет  ");
 		}
 		else
 		{
 			SetCursorPosition(left + 8, top + 3);
-			SetColor(Green, White);
+			SetColor(background, White);
 			printf("  Да  ");
 			SetCursorPosition(left + 48, top + 3);
-			SetColor(White, Green);
+			SetColor(White, background);
 			printf("  Нет  ");
 		}
 	} while (key != 13);
@@ -134,7 +140,7 @@ int main(int argc, const char * argv[])
 	{
 		preOptions(argv);                             
 		bool Disk[26], error;
-		char buffer[260], fCopy[260], pathCopy[MAX_PATH], CrntPath[MAX_PATH] = "C:\\";
+		char buffer[260], fCopy[260], pathCopy[MAX_PATH], CrntPath[MAX_PATH] = "C:\\", *prevPath = NULL;
 		pathCopy[0] = '\0';
 		int CrntStr = 0, key;
 		FILE *source = NULL, *dist;
@@ -188,25 +194,28 @@ int main(int argc, const char * argv[])
 					if (!(fCrnt->file.attrib & _A_SYSTEM))
 					{
 						_chdir(fCrnt->file.name);
-						savePath(fCrnt->file.name, CrntPath);
+						savePath(fCrnt->file.name, CrntPath, &prevPath);
 						addLog("Перешли в папку", "INFO", fCrnt->file.name);
-						RefreshFiles(&flast, &CrntStr, &fCrnt);
+						if (prevPath) RefreshFiles(&flast, &CrntStr, &fCrnt, &prevPath);
+						else RefreshFiles(&flast, &CrntStr, &fCrnt);
 						showPath(CrntPath);
 					}
 					else showError("У вас нет доступа к данной папке", "");
 				}
 				else
 				{
-
 					runHEX(fCrnt->file.name, fCrnt->file.size);
 					addLog(fCrnt->file.name, "INFO", "Открыт в HEX редакторе");
 				}
 				break;
 			case 8:
-				_chdir("..");
-				savePath("..", CrntPath);
-				RefreshFiles(&flast, &CrntStr, &fCrnt);
-				showPath(CrntPath);
+				if (CrntPath[3])
+				{
+					_chdir("..");
+					savePath("..", CrntPath, &prevPath);
+					RefreshFiles(&flast, &CrntStr, &fCrnt, &prevPath);
+					showPath(CrntPath);
+				}
 				break;
 			case 0:
 				key = _getch();
@@ -301,6 +310,7 @@ int main(int argc, const char * argv[])
 					if ((fCrnt->file.name[0] == '.') && (fCrnt->file.name[1] == '.') && (fCrnt->file.name[2] == '\0')) showError("Путь назад невозможно удалить", "");
 					else
 					{
+						if (exitFM("Вы точно хотите удалить?", Red))
 						if (fCrnt->file.attrib & _A_SUBDIR)
 						{
 							deleteFolder(fCrnt->file.name);
@@ -309,14 +319,18 @@ int main(int argc, const char * argv[])
 						else
 							if (remove(fCrnt->file.name) == -1) showError("Данный файл не может быть удален", "");
 							else addLog(fCrnt->file.name, "INFO", "Удален");
-							RefreshFiles(&flast, &CrntStr, &fCrnt);
+						deleteBlockUp(CrntStr);
+						deleteElement(&fCrnt);
+						CrntStr--;
+						readStringFromConsole(CrntStr, Cyan, White);
+						showLastStr(fCrnt, CrntStr);
 					}
 				default:
 					break;
 				}
 				break;
 			case 27:
-				if (!exitFM()) key = 1;
+				if (!exitFM("Вы точно хотите выйти?", Green)) key = 1;
 			default:
 				break;
 			}
