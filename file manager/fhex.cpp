@@ -14,6 +14,16 @@
 #include "fwin.h"
 #include "Globals.h"
 #include "ffiles.h"
+unsigned int char2int_(char chr)
+{
+	if (chr >= '0' && chr <= '9')
+		return chr - '0';
+	else if (chr >= 'A' && chr <= 'F')
+		return chr - 'A' + 10;
+	else if (chr >= 'a' && chr <= 'f')
+		return chr - 'a' + 10;
+	return -1;
+}
 
 void selectHEX(int CrntStr, int CrntStl, bool select)
 {
@@ -203,6 +213,7 @@ void readBlockUpHEX()
 }
 void runHEX(char *FileName, _fsize_t FileSize)
 {
+	preOption();
 	FILE *fHex, *fNew;
 	fHex = fopen(FileName, "r+b");
 	if (!fHex)
@@ -373,6 +384,18 @@ void runHEX(char *FileName, _fsize_t FileSize)
 			}
 			secondChar = false;
 		}
+		if (key == 0)
+		{
+			key = _getch();
+			switch (key)
+			{
+			case 59:
+				searchHEX(fHex);
+				break;
+			default:
+				break;
+			}
+		}
 		if (((key >= '0') && (key <= '9')) || ((key >= 'a') && (key <= 'f')))
 		{
 			if ((key >= '0') && (key <= '9')) key -= 48;
@@ -429,27 +452,27 @@ void runHEX(char *FileName, _fsize_t FileSize)
 						printf("%08X", adress);
 						for (int i = 0; i < 16; i++)
 						{
-							fread(&c, sizeof(char), 1, fHex);
-							if (feof(fHex))
-							{
-								while (i < 16)
-								{
-									SetCursorPosition(left + 11 + i * 3, bottom - 2);
-									printf("  ");
-									SetCursorPosition(left + 60 + i, bottom - 2);
-									printf(" ");
-									i++;
-								}
-								break;
-							}
-							SetCursorPosition(left + 11 + i * 3, bottom - 2);
-							SetColor(Magenta, White);
-							printf("%02X", c);
-							SetCursorPosition(left + 60 + i, bottom - 2);
-							SetColor(Magenta, Yellow);
-							if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
-							else
-								printf("%c", c);
+fread(&c, sizeof(char), 1, fHex);
+if (feof(fHex))
+{
+	while (i < 16)
+	{
+		SetCursorPosition(left + 11 + i * 3, bottom - 2);
+		printf("  ");
+		SetCursorPosition(left + 60 + i, bottom - 2);
+		printf(" ");
+		i++;
+	}
+	break;
+}
+SetCursorPosition(left + 11 + i * 3, bottom - 2);
+SetColor(Magenta, White);
+printf("%02X", c);
+SetCursorPosition(left + 60 + i, bottom - 2);
+SetColor(Magenta, Yellow);
+if (((c >= 0x00) && (c <= 0x0f)) || (c == 0x95)) printf(".");
+else
+printf("%c", c);
 						}
 					}
 				}
@@ -462,4 +485,101 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	remove("BufferFile");
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
+}
+void preOption()
+{
+
+}
+void searchHEX(FILE * HexFile)
+{
+	EnableCursor(true);
+	CHAR_INFO *chiBuffer = new CHAR_INFO[40 * 8];
+	short top = ConsoleSize.Y / 2 - 4;
+	short bottom = ConsoleSize.Y / 2 + 4;
+	short left = ConsoleSize.X / 2 - 20;
+	short right = ConsoleSize.X / 2 + 20;
+	showWindow(&chiBuffer, top, left, bottom, right, DarkGray);
+	SetCursorPosition(left + 1, top + 2);
+	printf("S");
+	SetCursorPosition(left + 3, top + 2);
+	SetColor(Black, White);
+	printf("                                   ");
+	SetCursorPosition(left + 1, top + 4);
+	SetColor(DarkGray, White);
+	printf("H");
+	SetCursorPosition(left + 3, top + 4);
+	SetColor(Black, White);
+	printf("                                   ");
+	SetColor(DarkGray, White);
+	SetCursorPosition(left + 4, top + 6);
+	SetColor(White, DarkGray);
+	printf(" Èñêàòü ");
+	SetCursorPosition(right - 13, top + 6);
+	SetColor(DarkGray, White);
+	printf(" Îòìåíà ");
+	SetCursorPosition(left + 3, top + 2);
+	SetColor(Black, White);
+	bool bSearch = true, bString = true;
+	char instring[260],htos[2];
+	setlocale(LC_CTYPE, "RUS");
+	int key, i = 0, tmp, j = 0;
+	do
+	{
+		key = _getch();
+		if (key == 224)
+		{
+			key = _getch();
+			switch (key)
+			{
+
+			case 80:
+				SetCursorPosition(left + 3 + 2 * i, top + 4);
+				bString = false;
+				break;
+			case 72:
+				SetCursorPosition(left + 3 + i, top + 2);
+				bString = true;
+			default:
+				break;
+			}
+		}
+		else
+		{
+			if (bString)
+			{
+				printf("%c", key);
+				SetCursorPosition(left + 3 + 2 * i, top + 4);
+				printf("%X", key);
+				i++;
+				SetCursorPosition(left + 3 + i, top + 2);
+				sprintf(instring + i - 1, "%c", key);
+			}
+			else
+			{
+				if (((key >= '0') && (key <= '9')) || ((key >= 'A') && (key <= 'F')))
+				{
+					printf("%c", key);
+					sprintf(htos+j, "%c", key);
+					i++;
+					j++;
+					SetCursorPosition(left + 3 + i, top + 4);
+					
+					if ((i % 2 == 0) && (i != 0))
+					{
+						j = 0;
+						key = char2int_(htos[0]) * 16 + char2int_(htos[1]);
+						SetCursorPosition(left + 3 + i/2 -1, top + 2);
+						printf("%c", key);
+						sprintf(instring + i - 1, "%c", key);
+						SetCursorPosition(left + 3 + i, top + 4);
+					}
+
+
+				}
+			}
+		}
+	} while (key != 27);
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+	EnableCursor(false);
 }
