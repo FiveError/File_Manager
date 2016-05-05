@@ -136,6 +136,7 @@ void preOptions(const char *argv[])
 	setlocale(LC_ALL, "rus");
 }
 
+
 int main(int argc, const char * argv[]) 
 	{
 		preOptions(argv);                             
@@ -217,6 +218,69 @@ int main(int argc, const char * argv[])
 					showPath(CrntPath);
 				}
 				break;
+			case 32:
+				if (fCrnt->file.attrib & _A_SUBDIR && !(fCrnt->file.attrib & _A_SYSTEM))
+				{
+					unsigned int countFile = 0, countFolder = 0;
+					
+					CHAR_INFO *chiBuffer = new CHAR_INFO[40 * 20];
+					short top = ConsoleSize.Y / 2 - 10;
+					short bottom = ConsoleSize.Y / 2 + 10;
+					short left = ConsoleSize.X / 2 - 20;
+					short right = ConsoleSize.X / 2 + 20;
+					showWindow(&chiBuffer,top,left,bottom,right,Cyan);
+					SetCursorPosition(left + 10, top + 1);
+					printf("Свойства папки");
+					SetCursorPosition(left + 5, top + 2);
+					printf("Название папки");
+					SetCursorPosition(left + 5, top + 3);
+					printf("%s", fCrnt->file.name);
+					SetCursorPosition(left + 5, top + 4);
+					printf("Дата создания");
+					SetCursorPosition(left + 5, top + 5);
+					printf("%s", asctime((localtime(&fCrnt->file.time_create))));
+					SetCursorPosition(left + 5, top + 6);
+					printf("Дата изменения");
+					SetCursorPosition(left + 5, top + 7);
+					printf("%s", asctime((localtime(&fCrnt->file.time_write))));
+					SetCursorPosition(left + 5, top + 8);
+					printf("Папок");
+					
+					SetCursorPosition(left + 5, top + 10);
+					printf("Файлов");
+					
+
+					std::thread countFF(CountFileFolder, fCrnt->file.name, &countFile, &countFolder);
+					countFF.detach();
+					unsigned int tmp = countFile;
+					unsigned int tmp1 = countFolder;
+					do
+					{
+						
+						SetCursorPosition(left + 5, top + 11);
+						printf("%d", countFile);
+						tmp = countFile;
+						SetCursorPosition(left + 5, top + 9);
+						printf("%d", countFolder);
+						tmp1 = countFolder;
+						std::this_thread::sleep_for(std::chrono::milliseconds(40));
+					} while (tmp != countFile && tmp1 != countFolder);
+					SetCursorPosition(left + 5, top + 11);
+					printf("%d", countFile);
+					SetCursorPosition(left + 5, top + 9);
+					printf("%d", countFolder);
+					_getch();
+					hideWindow(chiBuffer, top, left, bottom, right);
+					delete[] chiBuffer;
+
+
+				}
+				else
+				{
+
+				}
+
+					break;
 			case 0:
 				key = _getch();
 				switch (key)

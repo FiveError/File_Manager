@@ -23,3 +23,6 @@ void newFolder();
 void deleteFolder(char * path);
 void FolderCopy(char * path, char * fCopy);
 bool addFolder(files **flast, char * FileName);
+
+void CountFileFolder(char * FolderPath, unsigned int * countFile, unsigned int * countFolder);
+

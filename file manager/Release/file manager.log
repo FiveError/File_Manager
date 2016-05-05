@@ -1,0 +1,15 @@
+﻿  ffiles.cpp
+ffiles.cpp(274): warning C4018: '<': signed/unsigned mismatch
+ffiles.cpp(533): warning C4552: '-': operator has no effect; expected operator with side-effect
+  fhex.cpp
+fhex.cpp(264): warning C4267: '=': conversion from 'size_t' to 'unsigned char', possible loss of data
+fhex.cpp(525): warning C4101: 'tmp': unreferenced local variable
+  fm.cpp
+  fwin.cpp
+  huffman.cpp
+huffman.cpp(41): warning C4267: 'argument': conversion from 'size_t' to 'const char', possible loss of data
+  main.cpp
+  Generating code
+  All 731 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  file manager.vcxproj -> C:\Users\Сергей\Desktop\file_manager\Release\file manager.exe

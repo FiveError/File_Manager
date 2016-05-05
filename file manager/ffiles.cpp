@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <io.h>  
 #include <iostream>
+#include <chrono>
 #include <conio.h>
 #include <Windows.h>
 #include <direct.h>
@@ -512,4 +513,25 @@ bool addFolder(files ** flast, char * FileName)
 	if (current->prev) current->prev->next = add;
 	current->prev = add;
 	return 1;
+}
+void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder)
+{
+
+	_chdir(FolderPath);
+	_finddata_t myfile;  intptr_t p;
+	p = _findfirst("*.*", &myfile);
+	_findnext(p, &myfile);
+	while (_findnext(p, &myfile) != -1)
+	{
+		if (myfile.attrib & _A_SUBDIR && !(myfile.attrib & _A_SYSTEM))
+		{
+			(*countFolder)++;
+			CountFileFolder(myfile.name, countFile, countFolder);
+		}
+		else (*countFile)++;
+	}
+	_findclose(p);
+	_chdir("..");
+	
+
 }
