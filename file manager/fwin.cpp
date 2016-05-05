@@ -136,3 +136,7 @@ void deleteBlockUp(int CrntStr)
 		&srctReadRect);  // dest. screen buffer rectangle 
 	delete[] chiBuffer;
 }
+
+void addBlockDown(int x)
+{
+}

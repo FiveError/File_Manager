@@ -2,7 +2,6 @@
 #include "Globals.h"
 extern files flist, slist;
 void addFiles(_finddata_t a, files ** b);
-void add(_finddata_t a, files ** b);
 void saveClearStr();
 void showStr(char * FileName, _fsize_t FileSize, unsigned int attrib, int x, int y, bool newlist);
 void show(files * first);
@@ -23,3 +22,4 @@ void ExistFile(char(*str)[260]);
 void newFolder();
 void deleteFolder(char * path);
 void FolderCopy(char * path, char * fCopy);
+bool addFolder(files **flast, char * FileName);

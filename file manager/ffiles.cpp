@@ -29,15 +29,6 @@ void addFiles(_finddata_t a, files **b)
 	else
 		*b = adding;
 }
-void add(_finddata_t a, files **b)
-{
-	files *adding = new files;
-	adding->file = a;
-	adding->prev = NULL;
-	adding->next = *b;     //Список в обратном порядке
-	*b = adding;
-	if ((adding->next)) (*b)->next->prev = adding;
-}
 void saveClearStr()
 {
 	clearStr = new char[ConsoleSize.X - 1];
@@ -467,4 +458,58 @@ void FolderCopy(char *path, char *fCopy)
 	}
 	_findclose(p);
 	_chdir("..");
+}
+
+bool addFolder(files ** flast, char * FileName)
+{
+	files *current = *flast;
+	int i = 0;
+	bool b;
+	while (1)
+	{
+		b = false;
+		if ((unsigned)FileName[0] < (unsigned)current->file.name[0])
+			break;
+		if ((unsigned)FileName[0] > (unsigned)current->file.name[0])
+		{
+			current = current->next;
+			continue;
+		}
+		for (int j = 1; j<=i; j++)
+		{
+			if ((unsigned)FileName[j] < (unsigned)current->file.name[j])
+			{
+				b = true;
+				break;
+			}
+		}
+		if (b) break;
+		do
+		{
+			i++;
+			if ((unsigned)FileName[i] < (unsigned)current->file.name[i])
+			{
+				b = true;
+				break;
+			}
+			if ((unsigned)FileName[i] > (unsigned)current->file.name[i])
+			{
+				current = current->next;
+				break;
+			}
+		} while (FileName[i]);
+		if (b) break;
+		if ((unsigned)FileName[i] == (unsigned)current->prev->file.name[i]) return 0;
+	}
+	files *add = new files;
+	add->file.attrib = _A_SUBDIR;
+	add->file.size = 0;
+	for (i = 0; FileName[i]; i++)
+		add->file.name[i] = FileName[i];
+	add->file.name[i] = '\0';
+	add->prev = current->prev;
+	add->next = current;
+	if (current->prev) current->prev->next = add;
+	current->prev = add;
+	return 1;
 }

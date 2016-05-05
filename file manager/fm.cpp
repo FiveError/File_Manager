@@ -291,7 +291,7 @@ void getFramePath(const char *argv[])
 	memcpy(frameFile, argv[0], i - 12);
 	sprintf(frameFile + i - 12, "Settings\\ConsoleFrame%03dx%d.txt", ConsoleSize.X, ConsoleSize.Y);
 }
-void renameWindow(char *FileName)
+bool renameWindow(char *FileName)
 {
 	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * 25];
 	short top = ConsoleSize.Y / 2 - 2;
@@ -473,14 +473,23 @@ void renameWindow(char *FileName)
 		}
 		if (key == 13)
 		{
-			rename(FileName, NewName);
-			addLog(FileName, "RENAME", NewName);
-			break;
+			if (!rename(FileName, NewName)) {
+				addLog(FileName, "RENAME", NewName);
+				for (i = 0; NewName[i]; i++)
+					FileName[i] = NewName[i];
+				FileName[i] = NewName[i];
+				EnableCursor(false);
+				hideWindow(chiBuffer, top, left, bottom, right);
+				delete[] chiBuffer;
+				return 1;
+			}
+			else break;
 		}
 	} while (key != 27);
 	EnableCursor(false);
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
+	return 0;
 }
 void showError(char *buffer1, char *buffer2)
 {

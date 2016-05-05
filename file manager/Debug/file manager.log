@@ -1,4 +1,4 @@
-﻿  fhex.cpp
-c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(264): warning C4267: '=': conversion from 'size_t' to 'unsigned char', possible loss of data
-c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(525): warning C4101: 'tmp': unreferenced local variable
-  file manager.vcxproj -> C:\Users\Сергей\Desktop\file_manager\Debug\file manager.exe
+﻿  ffiles.cpp
+c:\projects\filemanager2\file manager\ffiles.cpp(274): warning C4018: <: несоответствие типов со знаком и без знака
+ffiles.obj : warning LNK4075: не учитывается "/EDITANDCONTINUE" из-за спецификации "/OPT:LBR"
+  file manager.vcxproj -> C:\Projects\fileManager2\Debug\file manager.exe

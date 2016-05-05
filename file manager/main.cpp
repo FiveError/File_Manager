@@ -225,9 +225,13 @@ int main(int argc, const char * argv[])
 					showError("Вы нажали не на ту клавишу", "О БОЖЕ!!!");
 					addLog("Нажата клавиша ошибки", "ERROR");
 					break;
-				case 60:
-					renameWindow(fCrnt->file.name);
-					RefreshFiles(&flast, &CrntStr, &fCrnt);
+				case 60:             //F2
+					if (renameWindow(fCrnt->file.name))
+					{
+						SetColor(Cyan, White);
+						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, CrntStr + 2, FALSE);
+					}
+					else showError("Ошибка при переименовании", "");
 					break;
 				case 61:
 					if (source != NULL) fclose(source);
@@ -254,7 +258,7 @@ int main(int argc, const char * argv[])
 						}
 					}
 					break;
-				case 62:
+				case 62:               //F4
 					if (source != NULL)
 					{
 						dist = fopen(fCopy, "rb");
@@ -278,12 +282,12 @@ int main(int argc, const char * argv[])
 							if (pathCopy[i] != CrntPath[i])
 							{
 								FolderCopy(pathCopy, fCopy);
+								addFolder(&flast, fCopy);
 								error = FALSE;
 								break;
 							}
 						}
 						if (error) showError("Нельзя копировать папку в дочернюю", "");
-
 					}
 					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					addLog(fCopy, "COPY", "Успешно скопирован");
