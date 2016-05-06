@@ -370,18 +370,25 @@ void ExistFile(char(*str)[260])
 	delete[] str1;
 	delete[] str2;
 }
-void newFolder()
+void newFolder(files **flast, files * fCrnt, int *CrntStr)
 {
 	int i = 1;
 	char str1[] = "Новая папка";
-	if (!_mkdir(str1)) return;
+	if (!_mkdir(str1))
+	{
+		renameWindow(str1);
+		addFolder(flast, str1, fCrnt, CrntStr);
+	}
 	char str[25];
 	while (1)
 	{
 		sprintf(str, "%s(%d)", str1, i);
-		if (!_mkdir(str)) return;
+		if (!_mkdir(str)) break;
 		i++;
 	}
+	renameWindow(str);
+	addFolder(flast, str, fCrnt, CrntStr);
+
 }
 void deleteFolder(char *path)
 {
@@ -461,14 +468,15 @@ void FolderCopy(char *path, char *fCopy)
 	_chdir("..");
 }
 
-bool addFolder(files ** flast, char * FileName)
+bool addFolder(files ** flast, char * FileName, files *fCrnt, int *CrntStr)
 {
 	files *current = *flast;
 	int i = 0;
-	bool b;
+	bool b, c;
 	while (1)
 	{
 		b = false;
+		c = false;
 		if ((unsigned)FileName[0] < (unsigned)current->file.name[0])
 			break;
 		if ((unsigned)FileName[0] > (unsigned)current->file.name[0])
@@ -483,8 +491,15 @@ bool addFolder(files ** flast, char * FileName)
 				b = true;
 				break;
 			}
+			if ((unsigned)FileName[j] > (unsigned)current->file.name[j])
+			{
+				current = current->next;
+				c = true;
+				break;
+			}
 		}
 		if (b) break;
+		if (c) continue;
 		do
 		{
 			i++;
@@ -496,11 +511,13 @@ bool addFolder(files ** flast, char * FileName)
 			if ((unsigned)FileName[i] > (unsigned)current->file.name[i])
 			{
 				current = current->next;
+				c = true;
 				break;
 			}
 		} while (FileName[i]);
+		if (c) continue;
 		if (b) break;
-		if ((unsigned)FileName[i] == (unsigned)current->prev->file.name[i]) return 0;
+		if ((unsigned)FileName[i] == (unsigned)current->file.name[i]) return 0;
 	}
 	files *add = new files;
 	add->file.attrib = _A_SUBDIR;
@@ -508,10 +525,32 @@ bool addFolder(files ** flast, char * FileName)
 	for (i = 0; FileName[i]; i++)
 		add->file.name[i] = FileName[i];
 	add->file.name[i] = '\0';
+	if (current->prev) 
 	add->prev = current->prev;
 	add->next = current;
 	if (current->prev) current->prev->next = add;
 	current->prev = add;
+	files *list = *flast;
+	while ((list != current) && (list != fCrnt)) 
+		list = list->next;
+	i = 0;
+	list = list->next;
+	while ((list != current) && (list != fCrnt)) {
+		list = list->next;
+		i++;
+	}
+	SetColor(Blue, White);
+	if ((list == current) && (i + *CrntStr < ConsoleSize.Y - 5))
+	{
+		addBlockDown(i + *CrntStr + 2);
+		showStr(FileName, 0, _A_SUBDIR, ConsoleSize.X, *CrntStr + 2 + i, FALSE);
+	}
+	if ((list == fCrnt) && (*CrntStr + 1 - i > 2	))
+	{
+		addBlockDown(*CrntStr + 1 - i);
+		showStr(FileName, 0, _A_SUBDIR, ConsoleSize.X, *CrntStr + 1 - i, FALSE);
+		(*CrntStr)++;
+	}
 	return 1;
 }
 void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder)

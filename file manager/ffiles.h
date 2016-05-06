@@ -19,10 +19,10 @@ void RefreshFiles(files ** flast, int * CrntStr, files ** fCrnt, char ** prevPat
 void addLog(char * message, char * typemessage, char * extramessage = "" );
 void getLogPath(const char * argv[]);
 void ExistFile(char(*str)[260]);
-void newFolder();
+void newFolder(files **flast, files * fCrnt, int *CrntStr);
 void deleteFolder(char * path);
 void FolderCopy(char * path, char * fCopy);
-bool addFolder(files **flast, char * FileName);
+bool addFolder(files **flast, char * FileName, files *fCrnt, int *CrntStr);
 
 void CountFileFolder(char * FolderPath, unsigned int * countFile, unsigned int * countFolder);
 

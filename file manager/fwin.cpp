@@ -106,7 +106,7 @@ void deleteBlockUp(int CrntStr)
 {
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect;
-	int size = (ConsoleSize.Y - 6)*(ConsoleSize.X - 2);
+	int size = (ConsoleSize.Y - 6 - CrntStr)*(ConsoleSize.X - 2);
 	CHAR_INFO *chiBuffer = new CHAR_INFO[size]; // [][122]; 
 	COORD coordBufSize;
 	COORD coordBufCoord;												/*Чтение из консоли*/
@@ -137,6 +137,37 @@ void deleteBlockUp(int CrntStr)
 	delete[] chiBuffer;
 }
 
-void addBlockDown(int x)
+void addBlockDown(int y)
 {
+	HANDLE hStdout;
+	SMALL_RECT srctReadRect;
+	int size = (ConsoleSize.Y - 4 - y)*(ConsoleSize.X - 2);
+	CHAR_INFO *chiBuffer = new CHAR_INFO[size]; // [][122]; 
+	COORD coordBufSize;
+	COORD coordBufCoord;												/*Чтение из консоли*/
+	BOOL fSuccess;
+	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	srctReadRect.Top = y;    // top left: row 2, col 1 
+	srctReadRect.Left = 1;
+	srctReadRect.Bottom = ConsoleSize.Y - 4; // bot. right: row 2, col 120 
+	srctReadRect.Right = ConsoleSize.X - 1;
+	coordBufSize.Y = ConsoleSize.Y - 4 - y;
+	coordBufSize.X = ConsoleSize.X - 2;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	fSuccess = ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+	srctReadRect.Top = y + 1;    // top left: row 2, col 1 
+	srctReadRect.Bottom = ConsoleSize.Y - 3; // bot. right: row 2, col 120 
+	fSuccess = WriteConsoleOutput(
+		hStdout, // screen buffer to write to 
+		chiBuffer,        // buffer to copy from 
+		coordBufSize,     // col-row size of chiBuffer 
+		coordBufCoord,    // top left src cell in chiBuffer 
+		&srctReadRect);  // dest. screen buffer rectangle 
+	delete[] chiBuffer;
 }

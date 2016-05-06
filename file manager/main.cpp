@@ -337,6 +337,7 @@ int main(int argc, const char * argv[])
 						fclose(dist);
 						memcpy(fCopy, buffer, 260);
 						addLog(fCopy, "COPY", "Успешно скопирован");
+						RefreshFiles(&flast, &CrntStr, &fCrnt);
 					}
 					if (pathCopy[0])
 					{
@@ -346,27 +347,25 @@ int main(int argc, const char * argv[])
 							if (pathCopy[i] != CrntPath[i])
 							{
 								FolderCopy(pathCopy, fCopy);
-								addFolder(&flast, fCopy);
+								addFolder(&flast, fCopy, fCrnt , &CrntStr);
+								addLog(fCopy, "COPY", "Успешно скопирован");
 								error = FALSE;
 								break;
 							}
 						}
 						if (error) showError("Нельзя копировать папку в дочернюю", "");
 					}
-					RefreshFiles(&flast, &CrntStr, &fCrnt);
-					addLog(fCopy, "COPY", "Успешно скопирован");
 					break;
-				case 63:
-					newFolder();
+				case 63:      //F5
+					newFolder(&flast,fCrnt,&CrntStr);
 					addLog("Созданна новая папка", "INFO");
-					RefreshFiles(&flast, &CrntStr, &fCrnt);;
 					break;
 				case 64:
 					listDisk(Disk);
 					chooseDisk(Disk);
 					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
-				case 65:
+				case 65:    //F7
 					huffman(fCrnt->file.name);
 					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
@@ -374,7 +373,7 @@ int main(int argc, const char * argv[])
 					unhuffman(fCrnt->file.name);
 					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
-				case 67:
+				case 67:    //F9
 					if ((fCrnt->file.name[0] == '.') && (fCrnt->file.name[1] == '.') && (fCrnt->file.name[2] == '\0')) showError("Путь назад невозможно удалить", "");
 					else
 					{

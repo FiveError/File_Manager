@@ -7,4 +7,4 @@ void SetCursorPosition(short x, short y);
 void readBlockDown();
 void readBlockUp();
 void deleteBlockUp(int CrntStr);
-void addBlockDown(int x);
+void addBlockDown(int y);
