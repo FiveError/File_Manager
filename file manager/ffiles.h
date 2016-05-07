@@ -24,5 +24,9 @@ void deleteFolder(char * path);
 void FolderCopy(char * path, char * fCopy);
 bool addFolder(files **flast, char * FileName, files *fCrnt, int *CrntStr);
 
-void CountFileFolder(char * FolderPath, unsigned int * countFile, unsigned int * countFolder);
+void CountFileFolder(char * FolderPath, unsigned int * countFile, unsigned int * countFolder, unsigned int *sizeFolder);
+
+void FolderInfo(files * fCrnt);
+
+void FileInfo(files * fCrnt);
 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <io.h>  
 #include <iostream>
+#include <limits>
 #include <chrono>
 #include <conio.h>
 #include <Windows.h>
@@ -14,6 +15,7 @@
 #include "fwin.h"
 #include "ffiles.h"
 using namespace std;
+
 files flist, slist;
 void addFiles(_finddata_t a, files **b)
 {
@@ -553,24 +555,279 @@ bool addFolder(files ** flast, char * FileName, files *fCrnt, int *CrntStr)
 	}
 	return 1;
 }
-void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder)
+void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder, unsigned int *sizeFolder)
 {
-
-	_chdir(FolderPath);
-	_finddata_t myfile;  intptr_t p;
-	p = _findfirst("*.*", &myfile);
-	_findnext(p, &myfile);
-	while (_findnext(p, &myfile) != -1)
-	{
-		if (myfile.attrib & _A_SUBDIR && !(myfile.attrib & _A_SYSTEM))
+		int sucsess = _chdir(FolderPath);
+		if (!sucsess)
 		{
-			(*countFolder)++;
-			CountFileFolder(myfile.name, countFile, countFolder);
-		}
-		else (*countFile)++;
-	}
-	_findclose(p);
-	_chdir("..");
-	
+			_finddata_t myfile;  intptr_t p;
+			p = _findfirst("*.*", &myfile);
+			if (p > 0)
+			{
+				_findnext(p, &myfile);
 
+				while (_findnext(p, &myfile) != -1)
+				{
+					if ((myfile.attrib & _A_SUBDIR)&& !(myfile.attrib & _A_SYSTEM))
+					{
+						(*countFolder)++;
+						CountFileFolder(myfile.name, countFile, countFolder, sizeFolder);
+					}
+					else
+					{
+						(*countFile)++;
+						*sizeFolder += myfile.size;
+					}
+				}
+			}
+			_findclose(p);
+			_chdir("..");
+		}
+}
+	
+void FolderInfo(files * fCrnt)
+{
+	unsigned int countFile = 0, countFolder = 0, sizeFolder = 0;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[40 * 20];
+	short top = ConsoleSize.Y / 2 - 10;
+	short bottom = ConsoleSize.Y / 2 + 10;
+	short left = ConsoleSize.X / 2 - 20;
+	short right = ConsoleSize.X / 2 + 20;
+	showWindow(&chiBuffer, top, left, bottom, right, Cyan);
+	SetCursorPosition(left + 10, top + 1);
+	printf("Свойства папки");
+	SetCursorPosition(left + 5, top + 2);
+	printf("Название папки");
+	SetCursorPosition(left + 5, top + 3);
+	if (strlen(fCrnt->file.name) < 34)
+	{
+		printf("%s", fCrnt->file.name);
+	}
+	else
+	{
+		for (int i = 0; i < 32; ++i)
+			printf("%c", fCrnt->file.name[i]);
+		printf("..");
+	}
+	SetCursorPosition(left + 5, top + 4);
+	printf("Дата создания");
+	SetCursorPosition(left + 5, top + 5);
+	printf("%s", asctime((localtime(&fCrnt->file.time_create))));
+	SetCursorPosition(left + 5, top + 6);
+	printf("Дата изменения");
+	SetCursorPosition(left + 5, top + 7);
+	printf("%s", asctime((localtime(&fCrnt->file.time_write))));
+	SetCursorPosition(left + 5, top + 8);
+	printf("Папок");
+
+	SetCursorPosition(left + 5, top + 10);
+	printf("Файлов");
+
+	SetCursorPosition(left + 5, top + 12);
+	printf("Размер папки");
+
+
+	std::thread countFF(CountFileFolder, fCrnt->file.name, &countFile, &countFolder, &sizeFolder);
+	countFF.detach();
+	unsigned int tmp = countFile;
+	unsigned int tmp1 = countFolder;
+	unsigned int tmp3 = sizeFolder;
+	int key = 0;
+	float tmp2 = 0;
+	unsigned int kb = 0, mb = 0, gb = 0;
+	do
+	{
+	
+		SetCursorPosition(left + 5, top + 11);
+		printf("%d", countFile);
+		tmp = countFile;
+		SetCursorPosition(left + 5, top + 9);
+		printf("%d", countFolder);
+		SetCursorPosition(left + 5, top + 13);
+		printf("                           ");
+		tmp1 = countFolder;
+		if (sizeFolder / 1024)
+		{
+			kb += sizeFolder / 1024;
+			sizeFolder %= 1024;
+		}
+		if (kb / 1024)
+		{
+			mb += kb / 1024;
+			kb %= 1024;
+		}
+		if (mb / 1024)
+		{
+			gb += mb / 1024;
+			mb %= 1024;
+		}
+		if (kb || mb || gb)
+		{
+			if (mb || gb)
+			{
+				if (gb)
+				{
+					SetCursorPosition(left + 5, top + 13);
+					tmp2 = gb + (float)mb / 1024;
+					printf("%.1fGB", tmp2);
+
+				}
+				else
+				{
+					SetCursorPosition(left + 5, top + 13);
+					tmp2 = mb + (float)kb / 1024;
+					printf("%.1fMB", tmp2);
+				}
+			}
+			else
+			{
+				SetCursorPosition(left + 5, top + 13);
+				tmp2 = kb + (float)sizeFolder / 1024;
+				printf("%.1fKB", tmp2);
+			}
+		}
+		else
+		{
+			SetCursorPosition(left + 5, top + 13);
+			printf("%dB", sizeFolder);
+		}
+		tmp3 = sizeFolder;
+		std::this_thread::sleep_for(std::chrono::milliseconds(40));
+	} while ((tmp != countFile) || (tmp1 != countFolder) || (tmp3 != sizeFolder));
+	SetCursorPosition(left + 5, top + 11);
+	printf("%d", countFile);
+	SetCursorPosition(left + 5, top + 9);
+	printf("%d", countFolder);
+	if (sizeFolder / 1024)
+	{
+		kb += sizeFolder / 1024;
+		sizeFolder %= 1024;
+	}
+	if (kb / 1024)
+	{
+		mb += kb / 1024;
+		kb %= 1024;
+	}
+	if (mb / 1024)
+	{
+		gb += mb / 1024;
+		mb %= 1024;
+	}
+	if (kb || mb || gb)
+	{
+		if (mb || gb)
+		{
+			if (gb)
+			{
+				SetCursorPosition(left + 5, top + 13);
+				tmp2 = gb + (float)mb / 1024;
+				printf("%.1fGB", tmp2);
+
+			}
+			else
+			{
+				SetCursorPosition(left + 5, top + 13);
+				tmp2 = mb + (float)kb / 1024;
+				printf("%.1fMB", tmp2);
+			}
+		}
+		else
+		{
+			SetCursorPosition(left + 5, top + 13);
+			tmp2 = kb + (float)sizeFolder / 1024;
+			printf("%.1fKB", tmp2);
+		}
+	}
+	else
+	{
+		SetCursorPosition(left + 5, top + 13);
+		printf("%dB", sizeFolder);
+	}
+	_getch();
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+}
+void FileInfo(files * fCrnt)
+{
+	_fsize_t size = fCrnt->file.size;
+	CHAR_INFO *chiBuffer = new CHAR_INFO[40 * 20];
+	short top = ConsoleSize.Y / 2 - 10;
+	short bottom = ConsoleSize.Y / 2 + 10;
+	short left = ConsoleSize.X / 2 - 20;
+	short right = ConsoleSize.X / 2 + 20;
+	showWindow(&chiBuffer, top, left, bottom, right, Cyan);
+	SetCursorPosition(left + 10, top + 1);
+	printf("Свойства файла");
+	SetCursorPosition(left + 5, top + 2);
+	printf("Название файла");
+	SetCursorPosition(left + 5, top + 3);
+	if (strlen(fCrnt->file.name) < 34)
+	{
+		printf("%s", fCrnt->file.name);
+	}
+	else
+	{
+		for (int i = 0; i < 32; ++i)
+			printf("%c", fCrnt->file.name[i]);
+		printf("..");
+	}
+	SetCursorPosition(left + 5, top + 4);
+	printf("Дата создания");
+	SetCursorPosition(left + 5, top + 5);
+	printf("%s", asctime((localtime(&fCrnt->file.time_create))));
+	SetCursorPosition(left + 5, top + 6);
+	printf("Дата изменения");
+	SetCursorPosition(left + 5, top + 7);
+	printf("%s", asctime((localtime(&fCrnt->file.time_write))));
+	SetCursorPosition(left + 5, top + 8);
+	printf("Размер файла");
+	unsigned int kb = 0, mb = 0, gb = 0;
+	float tmp2 = 0;
+	if (size / 1024)
+	{
+		kb += size / 1024;
+	}
+	if (kb / 1024)
+	{
+		mb += kb / 1024;
+		kb %= 1024;
+	}
+	if (mb / 1024)
+	{
+		gb += mb / 1024;
+		mb %= 1024;
+	}
+	if (kb || mb || gb)
+	{
+		if (mb || gb)
+		{
+			if (gb)
+			{
+				SetCursorPosition(left + 5, top + 9);
+				tmp2 = gb + (float)mb / 1024;
+				printf("%.1fGB", tmp2);
+
+			}
+			else
+			{
+				SetCursorPosition(left + 5, top + 9);
+				tmp2 = mb + (float)kb / 1024;
+				printf("%.1fMB", tmp2);
+			}
+		}
+		else
+		{
+			SetCursorPosition(left + 5, top + 9);
+			tmp2 = kb + (float)fCrnt->file.size / 1024;
+			printf("%.1fKB", tmp2);
+		}
+	}
+	else
+	{
+		SetCursorPosition(left + 5, top + 9);
+		printf("%dB", fCrnt->file.size);
+	}
+	_getch();
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
 }
