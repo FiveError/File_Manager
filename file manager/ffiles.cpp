@@ -43,7 +43,7 @@ void saveClearStr()
 		sprintf(clearStr + 5 * ConsoleSize.X / 6 + i, " ");
 	ConsoleSize.X += 2;
 }
-void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x, int y, bool newlist)
+void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int y, bool newlist)
 {
 	if ((!newlist) || (y == 2))
 	{
@@ -51,39 +51,30 @@ void showStr(char *FileName, _fsize_t FileSize, unsigned int attrib, int x, int 
 		printf("%s", clearStr);
 	}
 	SetCursorPosition(1, y);
-	x -= 2;
 	int FileNameLen;
 	for (FileNameLen = 0; FileName[FileNameLen]; FileNameLen++);
-	if (FileNameLen > (5 * x / 6 - 1))
-	{
-		for (int i = 0; i < (5 * x / 6 - 3); i++)
-			printf("%c", FileName[i]);
-		printf("..");
-	}
+	if (FileNameLen > 5 * (ConsoleSize.X-2) / 6 - 3) printf("%.*s..¦", 5 * (ConsoleSize.X - 2) / 6 - 3, FileName);
 	else
 	{
-		for (int i = 0; FileName[i]; i++)
-			printf("%c", FileName[i]);
+		printf("%s", FileName);
+		SetCursorPosition(5 * ConsoleSize.X / 6, y);
 	}
-	SetCursorPosition(5 * ConsoleSize.X / 6, y);
-
 	if (attrib & _A_SUBDIR)
 		printf("FOLDER");
 	else
 	{
-		if (FileSize / 10000000)
+		if (FileSize >> 23)
 		{
-			FileSize /= 1024 * 1024;
+			FileSize >>= 20;
 			printf("%dMB", FileSize);
 		}
 		else
-			if (FileSize / 10000)
+			if (FileSize >> 13)
 			{
-				FileSize /= 1024;
+				FileSize >>= 10;
 				printf("%dKB", FileSize);
 			}
-			else printf("%dB ", FileSize);
-
+			else printf("%dB", FileSize);
 	}
 }
 void show(files *first)
@@ -92,13 +83,13 @@ void show(files *first)
 	files *showing = first;
 	int i = ConsoleSize.Y - 5;
 	SetColor(Cyan, White);
-	showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
+	showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.Y - 3 - i, TRUE);
 	showing = showing->next;
 	i--;
 	SetColor(Blue, White);
 	while ((showing && i))
 	{
-		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
+		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.Y - 3 - i, TRUE);
 		showing = showing->next;
 		i--;
 	}
@@ -113,7 +104,7 @@ void show(files * first, int *CrntStr)
 		SetColor(Blue, White);
 		while ((showing && i))
 		{
-			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
+			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.Y - 3 - i, TRUE);
 			showing = showing->next;
 			i--;
 		}
@@ -126,12 +117,12 @@ void show(files * first, int *CrntStr)
 		SetColor(Blue, White);
 		while (i-1)
 		{
-			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 3 - i, TRUE);
+			showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.Y - 3 - i, TRUE);
 			showing = showing->next;
 			i--;
 		}
 		SetColor(Cyan, White);
-		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.X, ConsoleSize.Y - 4, FALSE);
+		showStr(showing->file.name, showing->file.size, showing->file.attrib, ConsoleSize.Y - 4, FALSE);
 	}
 }
 void showLastStr(files * fCrnt, int CrntStr)
@@ -149,14 +140,18 @@ void showLastStr(files * fCrnt, int CrntStr)
 		fCrnt = fCrnt->next;
 		CrntStr++;
 	}
-	showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, ConsoleSize.Y - 4, FALSE);
+	showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.Y - 4, FALSE);
 }
 void deleteElement(files ** fCrnt)
 {
 	files *del = *fCrnt;
+	if ((*fCrnt)->prev)
 	(*fCrnt)->prev->next = (*fCrnt)->next;
+	if ((*fCrnt)->next)
 	(*fCrnt)->next->prev = (*fCrnt)->prev;
+	if ((*fCrnt)->prev)
 	*fCrnt = (*fCrnt)->prev;
+	else  *fCrnt = (*fCrnt)->next;
 	delete del;
 }
 void deleteAll(files **flast)
@@ -193,6 +188,73 @@ void sortAlph(files **flast)
 	pointer = flist.next;
 	flist.next = slist.next;
 	slist.next = pointer;
+}
+int sortAlph(files ** flast, files ** fCrnt, files ** addFile, char **crntName, char ** addName)
+{
+	files *pointer = *flast;
+	files *sortFiles = slist.next;
+	int a = 0,alength = 0, clength = 0;
+	for (; (*crntName)[clength]; clength++);
+	for (; (*addName)[alength]; alength++);
+	bool addBool = false;
+	bool crntBool = false;
+	while (pointer)
+	{
+		if (pointer->file.attrib & _A_SUBDIR)
+		{
+			addFiles(pointer->file, &sortFiles);
+			if (!addBool)
+			{
+				addBool = TRUE;
+				if (pointer->file.name[alength]) addBool = FALSE;
+				else
+					for (int i = 0; i <= alength; i++)
+						if (pointer->file.name[i] != (*addName)[i])
+						{
+							addBool = FALSE;
+							break;
+						}
+				if (addBool)
+				{
+					*addFile = sortFiles;
+					while ((*addFile)->next) *addFile = (*addFile)->next;
+				}
+			}
+			if (!crntBool)
+			{
+				crntBool = TRUE;
+				if (pointer->file.name[clength]) crntBool = FALSE;
+				else
+					for (int i = 0; i <= clength; i++)
+						if (pointer->file.name[i] != (*crntName)[i])
+						{
+							crntBool = FALSE;
+							break;
+						}
+				if (crntBool)
+				{
+					*fCrnt = sortFiles;
+					while ((*fCrnt)->next) *fCrnt = (*fCrnt)->next;
+				}
+			}
+			if (crntBool && !addBool) a++;
+			if (!crntBool && addBool) a--;
+		}
+		pointer = pointer->next;
+	}
+	pointer = *flast;
+	while (pointer)
+	{
+		if (!(pointer->file.attrib & _A_SUBDIR)) addFiles(pointer->file, &sortFiles);
+		pointer = pointer->next;
+	}
+	deleteAll(flast);
+	*flast = sortFiles;
+	(*flast)->prev = NULL;
+	pointer = flist.next;
+	flist.next = slist.next;
+	slist.next = pointer;
+	return a;
 }
 void sortAlph(files ** flast, int * CrntStr, files ** fCrnt, char ** prevPath)
 {
@@ -251,6 +313,18 @@ void searchFiles(files **flast)
 		addFiles(myfile, flast);
 	_findclose(p);
 	sortAlph(flast);
+}
+int searchFiles(files ** flast, files ** fCrnt, files ** addFile, char **crntName, char ** addName)
+{
+	struct _finddata_t myfile;  intptr_t p;
+	p = _findfirst("*.*", &myfile);
+	if ((p != -1) && (myfile.name[0] != '.') && (myfile.name[1] != '\0'))
+		addFiles(myfile, flast);
+	while (_findnext(p, &myfile) != -1)
+		addFiles(myfile, flast);
+	_findclose(p);
+	int a = sortAlph(flast, fCrnt, addFile, crntName, addName);
+	return a;
 }
 void searchFiles(files ** flast, int * CrntStr, files ** fCrnt, char ** prevPath)
 {
@@ -372,14 +446,15 @@ void ExistFile(char(*str)[260])
 	delete[] str1;
 	delete[] str2;
 }
-void newFolder(files **flast, files * fCrnt, int *CrntStr)
+void newFolder(files **flast, files ** fCrnt, int *CrntStr)
 {
 	int i = 1;
 	char str1[] = "Новая папка";
 	if (!_mkdir(str1))
 	{
 		renameWindow(str1);
-		addFolder(flast, str1, fCrnt, CrntStr);
+		addFolder(flast, fCrnt, (*fCrnt)->file.name,str1 , CrntStr);
+		return;
 	}
 	char str[25];
 	while (1)
@@ -389,7 +464,7 @@ void newFolder(files **flast, files * fCrnt, int *CrntStr)
 		i++;
 	}
 	renameWindow(str);
-	addFolder(flast, str, fCrnt, CrntStr);
+	addFolder(flast, fCrnt, (*fCrnt)->file.name, str1, CrntStr);
 
 }
 void deleteFolder(char *path)
@@ -470,90 +545,24 @@ void FolderCopy(char *path, char *fCopy)
 	_chdir("..");
 }
 
-bool addFolder(files ** flast, char * FileName, files *fCrnt, int *CrntStr)
+void addFolder(files ** flast, files **fCrnt, char * crntName, char * FileName, int *CrntStr)
 {
-	files *current = *flast;
-	int i = 0;
-	bool b, c;
-	while (1)
-	{
-		b = false;
-		c = false;
-		if ((unsigned)FileName[0] < (unsigned)current->file.name[0])
-			break;
-		if ((unsigned)FileName[0] > (unsigned)current->file.name[0])
-		{
-			current = current->next;
-			continue;
-		}
-		for (int j = 1; j<=i; j++)
-		{
-			if ((unsigned)FileName[j] < (unsigned)current->file.name[j])
-			{
-				b = true;
-				break;
-			}
-			if ((unsigned)FileName[j] > (unsigned)current->file.name[j])
-			{
-				current = current->next;
-				c = true;
-				break;
-			}
-		}
-		if (b) break;
-		if (c) continue;
-		do
-		{
-			i++;
-			if ((unsigned)FileName[i] < (unsigned)current->file.name[i])
-			{
-				b = true;
-				break;
-			}
-			if ((unsigned)FileName[i] > (unsigned)current->file.name[i])
-			{
-				current = current->next;
-				c = true;
-				break;
-			}
-		} while (FileName[i]);
-		if (c) continue;
-		if (b) break;
-		if ((unsigned)FileName[i] == (unsigned)current->file.name[i]) return 0;
-	}
-	files *add = new files;
-	add->file.attrib = _A_SUBDIR;
-	add->file.size = 0;
-	for (i = 0; FileName[i]; i++)
-		add->file.name[i] = FileName[i];
-	add->file.name[i] = '\0';
-	if (current->prev) 
-	add->prev = current->prev;
-	add->next = current;
-	if (current->prev) current->prev->next = add;
-	current->prev = add;
-	files *list = *flast;
-	while ((list != current) && (list != fCrnt)) 
-		list = list->next;
-	i = 0;
-	list = list->next;
-	while ((list != current) && (list != fCrnt)) {
-		list = list->next;
-		i++;
-	}
+	files *current;
+	int i;
+	deleteAll(flast);
+	i = searchFiles(flast, fCrnt, &current, &crntName, &FileName);
 	SetColor(Blue, White);
-	if ((list == current) && (i + *CrntStr < ConsoleSize.Y - 5))
+	if ((i>0) && (i + *CrntStr < ConsoleSize.Y - 5))
 	{
 		addBlockDown(i + *CrntStr + 2);
-		showStr(FileName, 0, _A_SUBDIR, ConsoleSize.X, *CrntStr + 2 + i, FALSE);
+		showStr(FileName, 0, _A_SUBDIR,  *CrntStr + 2 + i, FALSE);
 	}
-	if ((list == fCrnt) && (*CrntStr + 1 - i > 2	))
+	if ((i<0) && (*CrntStr + 1 + i > 2	))
 	{
-		addBlockDown(*CrntStr + 1 - i);
-		showStr(FileName, 0, _A_SUBDIR, ConsoleSize.X, *CrntStr + 1 - i, FALSE);
+		addBlockDown(*CrntStr + 1 + i);
+		showStr(FileName, 0, _A_SUBDIR,  *CrntStr + 1 + i, FALSE);
 		(*CrntStr)++;
 	}
-	return 1;
 }
 void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder, unsigned int *sizeFolder)
 {

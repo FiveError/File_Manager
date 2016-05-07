@@ -129,13 +129,15 @@ void preOptions(const char *argv[])
 		ConsoleFrame();
 		saveConsoleToFile(frameFile);
 	}
-	
 	SetConsoleTitle(L"File Manager");
 	addLog("Программа запущена", "INFO");
 	EnableCursor(false);
 	_chdir("C:\\");
 	setlocale(LC_ALL, "rus");
 }
+
+									//деление делаем сдвигом :)
+									// printf("%.*s", dlina,str);   :)
 
 
 int main(int argc, const char * argv[]) 
@@ -165,7 +167,7 @@ int main(int argc, const char * argv[])
 					{
 						readBlockUp();
 						SetColor(Cyan, White);
-						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, ConsoleSize.Y - 4, FALSE);
+						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.Y - 4, FALSE);
 					}
 					else
 					{
@@ -180,7 +182,7 @@ int main(int argc, const char * argv[])
 					{
 						readBlockDown();
 						SetColor(Cyan, White);
-						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, 2, FALSE);
+						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, 2, FALSE);
 					}
 					else
 					{
@@ -239,7 +241,7 @@ int main(int argc, const char * argv[])
 					if (renameWindow(fCrnt->file.name))
 					{
 						SetColor(Cyan, White);
-						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.X, CrntStr + 2, FALSE);
+						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, CrntStr + 2, FALSE);
 					}
 					else showError("Ошибка при переименовании", "");
 					break;
@@ -293,7 +295,7 @@ int main(int argc, const char * argv[])
 							if (pathCopy[i] != CrntPath[i])
 							{
 								FolderCopy(pathCopy, fCopy);
-								addFolder(&flast, fCopy, fCrnt , &CrntStr);
+								addFolder(&flast, &fCrnt, fCrnt->file.name, fCopy, &CrntStr);
 								addLog(fCopy, "COPY", "Успешно скопирован");
 								error = FALSE;
 								break;
@@ -303,7 +305,7 @@ int main(int argc, const char * argv[])
 					}
 					break;
 				case 63:      //F5
-					newFolder(&flast,fCrnt,&CrntStr);
+					newFolder(&flast,&fCrnt,&CrntStr);
 					addLog("Созданна новая папка", "INFO");
 					break;
 				case 64:

@@ -1,4 +1,4 @@
-
+п»ї
 #include <stdio.h> 
 #include <stdlib.h>
 #include <io.h>  
@@ -22,7 +22,7 @@ bool loadConsoleFrame(char *FileName)
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect;
 	COORD coordBufSize;
-	COORD coordBufCoord;												/*Чтение из консоли*/
+	COORD coordBufCoord;												/*Р§С‚РµРЅРёРµ РёР· РєРѕРЅСЃРѕР»Рё*/
 	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	srctReadRect.Top = 0;    // top left: row 2, col 1 
 	srctReadRect.Left = 0;
@@ -74,6 +74,7 @@ void ConsoleFrame()
 		printf(" ");
 	printf("%c", 186);
 	ConsoleSize.Y -= 5;
+	clearStr[5 * ConsoleSize.X / 6 - 1] = 179;
 	for (int i = 0; i < ConsoleSize.Y; ++i)
 	{
 		printf("%c", 186);
@@ -84,8 +85,10 @@ void ConsoleFrame()
 			printf(" ");
 		//for (int j = 0; j < ConsoleSize.X; ++j)
 		//	printf(" ");
+		
 		printf("%c", 186);
 	}
+	clearStr[5 * ConsoleSize.X / 6 - 1] = 166;
 	printf("%c", 200);
 	for (int i = 0; i < (5 * ConsoleSize.X / 6 - 1); ++i)
 		printf("%c", 205);
@@ -139,7 +142,7 @@ void saveConsoleToFile(char *FileName)
 	SMALL_RECT srctReadRect;
 	CHAR_INFO *chiBuffer = new CHAR_INFO[ConsoleSize.X*ConsoleSize.Y]; // [1][122]; 
 	COORD coordBufSize;
-	COORD coordBufCoord;												/*Чтение из консоли*/
+	COORD coordBufCoord;												/*Р§С‚РµРЅРёРµ РёР· РєРѕРЅСЃРѕР»Рё*/
 	BOOL fSuccess;
 
 	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -170,7 +173,7 @@ void readStringFromConsole(int CrnStr, ConsoleColor a, ConsoleColor b)
 	SMALL_RECT srctReadRect;
 	CHAR_INFO *chiBuffer = new CHAR_INFO[ConsoleSize.X - 2]; // [1][122]; 
 	COORD coordBufSize;
-	COORD coordBufCoord;												/*Чтение из консоли*/
+	COORD coordBufCoord;												/*Р§С‚РµРЅРёРµ РёР· РєРѕРЅСЃРѕР»Рё*/
 	BOOL fSuccess;
 
 	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -215,13 +218,15 @@ void WindowFrame(short top, short left, short bottom, short right, ConsoleColor 
 	for (int i = 0; i < (right - left - 2); ++i)
 		printf("%c", 205);
 	printf("%c", 187);
+	char *str = new char[right - left];
+	sprintf(str,"%c", 186);
+	for (int i = 0; i < (right - left - 2); ++i)
+		sprintf(str + i + 1, " ");
+	sprintf(str+right-left-1,"%c", 186);
 	for (short j = 0; j < (bottom - top - 2); ++j)
 	{
 		SetCursorPosition(left, top + j + 1);
-		printf("%c", 186);
-		for (int i = 0; i < (right - left - 2); ++i)
-			printf(" ");
-		printf("%c", 186);
+		printf("%s", str);
 	}
 	SetCursorPosition(left, bottom - 1);
 	printf("%c", 200);
@@ -300,7 +305,7 @@ bool renameWindow(char *FileName)
 	short right = ConsoleSize.X / 2 + 40;
 	showWindow(&chiBuffer, top, left, bottom, right, DarkGray);
 	SetCursorPosition(left + 1, top + 1);
-	printf("Введите новое имя:");
+	printf("Р’РІРµРґРёС‚Рµ РЅРѕРІРѕРµ РёРјСЏ:");
 	SetCursorPosition(left + 1, top + 2);
 	SetColor(Black, White);
 	printf("                                                                              ");
@@ -407,7 +412,7 @@ bool renameWindow(char *FileName)
 						}
 						else
 						{
-							showError("Длина имени не может привышать 260 символов", "");
+							showError("Р”Р»РёРЅР° РёРјРµРЅРё РЅРµ РјРѕР¶РµС‚ РїСЂРёРІС‹С€Р°С‚СЊ 260 СЃРёРјРІРѕР»РѕРІ", "");
 							SetColor(Black, White);
 						}
 					}
@@ -424,7 +429,7 @@ bool renameWindow(char *FileName)
 						}
 						else
 						{
-							showError("Длина имени не может привышать 260 символов", "");
+							showError("Р”Р»РёРЅР° РёРјРµРЅРё РЅРµ РјРѕР¶РµС‚ РїСЂРёРІС‹С€Р°С‚СЊ 260 СЃРёРјРІРѕР»РѕРІ", "");
 							SetColor(Black, White);
 						}
 					}
@@ -506,7 +511,7 @@ void showError(char *buffer1, char *buffer2)
 	SetCursorPosition(left + 2, top + 3);
 	printf("%s", buffer2);
 	SetCursorPosition(left + 2, top + 5);
-	printf("Нажмите на любую клавишу...");
+	printf("РќР°Р¶РјРёС‚Рµ РЅР° Р»СЋР±СѓСЋ РєР»Р°РІРёС€Сѓ...");
 	_getch();
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
@@ -517,7 +522,7 @@ void selectDisk(int CrntStr, bool select)
 	SMALL_RECT srctReadRect;
 	CHAR_INFO *chiBuffer = new CHAR_INFO[ConsoleSize.X - 2]; // [1][122]; 
 	COORD coordBufSize;
-	COORD coordBufCoord;												/*Чтение из консоли*/
+	COORD coordBufCoord;												/*Р§С‚РµРЅРёРµ РёР· РєРѕРЅСЃРѕР»Рё*/
 	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
 	chiBuffer = new CHAR_INFO[8];
 	srctReadRect.Top = ConsoleSize.Y / 2 - 13 + CrntStr;    // top left: row 2, col 1 
@@ -572,7 +577,7 @@ void chooseDisk(bool *Disk)
 	showWindow(&chiBuffer, top, left, bottom, right, Cyan);
 	SetCursorPosition(left + 3, top + 1);
 	SetColor(Cyan, Yellow);
-	printf("Диск");
+	printf("Р”РёСЃРє");
 	for (int i = 0; i < 26; ++i)
 	{
 		if (Disk[i])

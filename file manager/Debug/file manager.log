@@ -1,3 +1,3 @@
 ﻿  ffiles.cpp
-c:\users\сергей\desktop\file_manager\file manager\ffiles.cpp(277): warning C4018: '<': signed/unsigned mismatch
-  file manager.vcxproj -> C:\Users\Сергей\Desktop\file_manager\Debug\file manager.exe
+c:\projects\filemanager\file_manager\file manager\ffiles.cpp(351): warning C4018: <: несоответствие типов со знаком и без знака
+  file manager.vcxproj -> C:\Projects\FileManager\File_Manager\Debug\file manager.exe
