@@ -245,7 +245,46 @@ int sortAlph(files ** flast, files ** fCrnt, files ** addFile, char **crntName, 
 	pointer = *flast;
 	while (pointer)
 	{
-		if (!(pointer->file.attrib & _A_SUBDIR)) addFiles(pointer->file, &sortFiles);
+		if (!(pointer->file.attrib & _A_SUBDIR))
+		{
+			addFiles(pointer->file, &sortFiles);
+			if (!addBool)
+			{
+				addBool = TRUE;
+				if (pointer->file.name[alength]) addBool = FALSE;
+				else
+					for (int i = 0; i <= alength; i++)
+						if (pointer->file.name[i] != (*addName)[i])
+						{
+							addBool = FALSE;
+							break;
+						}
+				if (addBool)
+				{
+					*addFile = sortFiles;
+					while ((*addFile)->next) *addFile = (*addFile)->next;
+				}
+			}
+			if (!crntBool)
+			{
+				crntBool = TRUE;
+				if (pointer->file.name[clength]) crntBool = FALSE;
+				else
+					for (int i = 0; i <= clength; i++)
+						if (pointer->file.name[i] != (*crntName)[i])
+						{
+							crntBool = FALSE;
+							break;
+						}
+				if (crntBool)
+				{
+					*fCrnt = sortFiles;
+					while ((*fCrnt)->next) *fCrnt = (*fCrnt)->next;
+				}
+			}
+			if (crntBool && !addBool) a++;
+			if (!crntBool && addBool) a--;
+		}
 		pointer = pointer->next;
 	}
 	deleteAll(flast);
@@ -453,7 +492,7 @@ void newFolder(files **flast, files ** fCrnt, int *CrntStr)
 	if (!_mkdir(str1))
 	{
 		renameWindow(str1);
-		addFolder(flast, fCrnt, (*fCrnt)->file.name,str1 , CrntStr);
+		addElement(flast, fCrnt,str1 , CrntStr);
 		return;
 	}
 	char str[25];
@@ -464,7 +503,7 @@ void newFolder(files **flast, files ** fCrnt, int *CrntStr)
 		i++;
 	}
 	renameWindow(str);
-	addFolder(flast, fCrnt, (*fCrnt)->file.name, str1, CrntStr);
+	addElement(flast, fCrnt, str, CrntStr);
 
 }
 void deleteFolder(char *path)
@@ -505,13 +544,10 @@ void deleteFolder(char *path)
 	}
 
 }
-void FolderCopy(char *path, char *fCopy)
+bool FolderCopy(char *path, char *fCopy)
 {
-	if (_mkdir(fCopy) == -1)
-	{
-		showError("Ошибка создания папки", "");
-		return;
-	}
+	bool makedir = true;
+	if (_mkdir(fCopy) == -1) makedir = false;
 	_chdir(fCopy);
 	_finddata_t myfile;  intptr_t p;
 	int k1, k2;
@@ -543,26 +579,48 @@ void FolderCopy(char *path, char *fCopy)
 	}
 	_findclose(p);
 	_chdir("..");
+	return makedir;
 }
 
-void addFolder(files ** flast, files **fCrnt, char * crntName, char * FileName, int *CrntStr)
+void addElement(files ** flast, files **fCrnt, char * FileName, int *CrntStr)
 {
 	files *current;
-	int i;
+	char *crntName;
+	int i, attrib;
+	for (i = 0; (*fCrnt)->file.name[i]; i++);
+	crntName = new char[i + 1];
+	for (i = 0; (*fCrnt)->file.name[i]; i++) crntName[i] = (*fCrnt)->file.name[i];
+	crntName[i] = '\0';
 	deleteAll(flast);
 	i = searchFiles(flast, fCrnt, &current, &crntName, &FileName);
 	SetColor(Blue, White);
 	if ((i>0) && (i + *CrntStr < ConsoleSize.Y - 5))
 	{
 		addBlockDown(i + *CrntStr + 2);
-		showStr(FileName, 0, _A_SUBDIR,  *CrntStr + 2 + i, FALSE);
+		showStr(FileName, current->file.size, current->file.attrib,  *CrntStr + 2 + i, FALSE);
 	}
-	if ((i<0) && (*CrntStr + 1 + i > 2	))
+	if ((i<0) && (*CrntStr + 3 + i > 2	))
 	{
-		addBlockDown(*CrntStr + 1 + i);
-		showStr(FileName, 0, _A_SUBDIR,  *CrntStr + 1 + i, FALSE);
+		addBlockDown(*CrntStr + 3 + i);
+		showStr(FileName, current->file.size, current->file.attrib,  *CrntStr + 3 + i, FALSE);
 		(*CrntStr)++;
 	}
+	delete[] crntName;
+}
+void afterRename(files ** flast, files ** fCrnt, int * CrntStr)
+{
+	char *newName;
+	int length;
+	for (length = 0; (*fCrnt)->file.name[length]; length++);
+	newName = new char[length + 1];
+	for (length = 0; (*fCrnt)->file.name[length]; length++) newName[length] = ((*fCrnt)->file.name[length]);
+	newName[length] = '\0';
+	*fCrnt = (*fCrnt)->prev;
+	deleteBlockUp(*CrntStr);
+	(*CrntStr)--;
+	addElement(flast, fCrnt, newName, CrntStr);
+	showLastStr(*fCrnt, (*CrntStr));
+	delete[] newName;
 }
 void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder, unsigned int *sizeFolder)
 {

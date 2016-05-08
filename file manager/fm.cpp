@@ -488,7 +488,11 @@ bool renameWindow(char *FileName)
 				delete[] chiBuffer;
 				return 1;
 			}
-			else break;
+			else {
+				showError("Файл с таким именем уже существует", "");
+				SetColor(Black, White);
+				SetCursorPosition(left + 1 + i - lchar, top + 2);
+			}
 		}
 	} while (key != 27);
 	EnableCursor(false);

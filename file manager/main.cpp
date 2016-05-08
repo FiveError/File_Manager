@@ -240,8 +240,8 @@ int main(int argc, const char * argv[])
 				case 60:             //F2
 					if (renameWindow(fCrnt->file.name))
 					{
-						SetColor(Cyan, White);
-						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, CrntStr + 2, FALSE);
+						afterRename(&flast, &fCrnt, &CrntStr);
+						readStringFromConsole(CrntStr, Cyan, White);
 					}
 					else showError("Ошибка при переименовании", "");
 					break;
@@ -283,9 +283,9 @@ int main(int argc, const char * argv[])
 						dist = fopen(fCopy, "wb");
 						FileCopy(source, dist);
 						fclose(dist);
+						addElement(&flast, &fCrnt, fCopy, &CrntStr);
 						memcpy(fCopy, buffer, 260);
 						addLog(fCopy, "COPY", "Успешно скопирован");
-						RefreshFiles(&flast, &CrntStr, &fCrnt);
 					}
 					if (pathCopy[0])
 					{
@@ -294,8 +294,7 @@ int main(int argc, const char * argv[])
 						{
 							if (pathCopy[i] != CrntPath[i])
 							{
-								FolderCopy(pathCopy, fCopy);
-								addFolder(&flast, &fCrnt, fCrnt->file.name, fCopy, &CrntStr);
+								if (FolderCopy(pathCopy, fCopy)) addElement(&flast, &fCrnt, fCopy, &CrntStr);
 								addLog(fCopy, "COPY", "Успешно скопирован");
 								error = FALSE;
 								break;
