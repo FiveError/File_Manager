@@ -165,7 +165,7 @@ int main(int argc, const char * argv[])
 					fCrnt = fCrnt->next;
 					if (CrntStr + 1 == (ConsoleSize.Y - 5))
 					{
-						readBlockUp();
+						readBlockUp(Blue);
 						SetColor(Cyan, White);
 						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, ConsoleSize.Y - 4, FALSE);
 					}
@@ -180,7 +180,7 @@ int main(int argc, const char * argv[])
 					fCrnt = fCrnt->prev;
 					if (!CrntStr)
 					{
-						readBlockDown();
+						readBlockDown(Blue);
 						SetColor(Cyan, White);
 						showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, 2, FALSE);
 					}
@@ -342,6 +342,9 @@ int main(int argc, const char * argv[])
 				default:
 					break;
 				}
+				break;
+			case 't':
+				txtRead(fCrnt->file.name, fCrnt->file.size);
 				break;
 			case 27:
 				if (!exitFM("Вы точно хотите выйти?", Green)) key = 1;

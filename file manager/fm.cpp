@@ -136,6 +136,116 @@ void ConsoleFrame()
 	printf("F9-DELETE");
 	setlocale(LC_CTYPE, "RUS");
 }
+void txtRead(char * FileName, _fsize_t FileSize)
+{
+	FILE *fTxt;
+	fTxt = fopen(FileName, "r+b");
+	if (!fTxt) {
+		showError("Ошибка открытия файла", "");
+		return;
+	}
+	CHAR_INFO *chiBuffer = new CHAR_INFO[ConsoleSize.X * (ConsoleSize.Y - 2)];
+	short top = 0;
+	short bottom = ConsoleSize.Y - 2;
+	short left = 0;
+	short right = ConsoleSize.X;
+	showWindow(&chiBuffer, top, left, bottom, right, Green);
+	int length;
+	for (length = 0; FileName[length]; length++);
+	SetColor(Green, Yellow);
+	if (length > ConsoleSize.X - 2)
+	{
+		SetCursorPosition(1, 1);
+		printf("%.*s..", ConsoleSize.X - 4, FileName);
+	}
+	else
+	{
+		SetCursorPosition((ConsoleSize.X - length) / 2, 1);
+		printf("%s", FileName);
+	}
+	char * text = new char[ConsoleSize.X - 2];
+	int downPos = 0, tmp,upPos = 0;
+	bool nextStr;
+	SetColor(Green, White);
+	for (int i = 0; i < ConsoleSize.Y - 4; ++i)
+	{
+		nextStr = false;
+		SetCursorPosition(1, 1 + i);
+		fseek(fTxt, downPos, SEEK_SET);
+		fread(text, ConsoleSize.X - 2, sizeof(char), fTxt);
+		for (int j = 0; j < ConsoleSize.X - 2; ++j)
+		{
+			if (text[j] == '\n')
+			{
+				nextStr = true;
+				tmp = j;
+				break;
+			}
+			else
+				if (((text[j] >= 0x00) && (text[j] <= 0x0f)) || (text[j] == 0x95)) printf(".");
+				else printf("%c", text[j]);
+		}
+		if (nextStr) downPos += tmp + 1;
+		else downPos += ConsoleSize.X - 2;
+	}
+	int key;
+	do
+	{
+		key = _getch();
+		if (key == 224)
+			key = _getch();
+		switch (key)
+		{
+		case 80:
+			readBlockUp(Green);
+			SetCursorPosition(1, ConsoleSize.Y - 4);
+			fseek(fTxt, downPos, SEEK_SET);
+			fread(text, ConsoleSize.X - 2, sizeof(char), fTxt);
+			for (int j = 0; j < ConsoleSize.X - 2; ++j)
+			{
+				if (text[j] == '\n')
+				{
+					nextStr = true;
+					tmp = j;
+					break;
+				}
+				else
+					if (((text[j] >= 0x00) && (text[j] <= 0x0f)) || (text[j] == 0x95)) printf(".");
+					else printf("%c", text[j]);
+			}
+			if (nextStr) downPos += tmp + 1;
+			else downPos += ConsoleSize.X - 2;
+			break;
+		case 72:
+			readBlockDown(Green);
+			SetCursorPosition(1, 1);
+			fseek(fTxt, downPos, SEEK_SET);
+			fread(text, ConsoleSize.X - 2, sizeof(char), fTxt);	
+			for (int j = 0; j < ConsoleSize.X - 2; ++j)
+			{
+				if (text[j] == '\n')
+				{
+					nextStr = true;
+					tmp = j;
+					break;
+				}
+				else
+					if (((text[j] >= 0x00) && (text[j] <= 0x0f)) || (text[j] == 0x95)) printf(".");
+					else printf("%c", text[j]);
+			}
+			if (nextStr) downPos += tmp + 1;
+			else downPos += ConsoleSize.X - 2;
+			break;
+		default:
+			break;
+		}
+	} while (key != 27);
+
+
+	hideWindow(chiBuffer, top, left, bottom, right);
+	fclose(fTxt);
+	delete[] chiBuffer;
+}
 void saveConsoleToFile(char *FileName)
 {
 	HANDLE hStdout;

@@ -263,7 +263,12 @@ void runHEX(char *FileName, _fsize_t FileSize)
 {
 	//preOption();
 	FILE *fHex;
-	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * ConsoleSize.Y-2];
+	fHex = fopen(FileName, "r+b");
+	if (!fHex) {
+		showError("Ошибка открытия файла", "");
+		return;
+	}
+	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * (ConsoleSize.Y-2)];
 	short top = 0;
 	short bottom = ConsoleSize.Y - 2;
 	short left = ConsoleSize.X / 2 - 40;
@@ -279,7 +284,6 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	else lastStl = FileSize % 16 + 1;
 	unsigned char c, *ch;
 	bool secondChar = false;
-	fHex = fopen(FileName, "r+b");
 	SetCursorPosition(left + 12, top + 1);
 	SetColor(Magenta, Yellow);
 	unsigned int adress;

@@ -15,3 +15,4 @@ void selectDisk(int CrntStr, bool select);
 void listDisk(bool * Disk);
 void chooseDisk(bool * Disk);
 void ConsoleFrame();
+void txtRead(char * FileName, _fsize_t FileSize);

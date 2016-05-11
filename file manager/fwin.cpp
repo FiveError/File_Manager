@@ -31,7 +31,7 @@ void SetCursorPosition(short x, short y)
 	COORD position = { x,y };
 	SetConsoleCursorPosition(hConsole, position);
 }
-void readBlockDown()
+void readBlockDown(ConsoleColor ColorLastStr)
 {
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect;
@@ -57,7 +57,7 @@ void readBlockDown()
 		&srctReadRect); // screen buffer source rectangle 
 	srctReadRect.Top = 3;    // top left: row 2, col 1 
 	srctReadRect.Bottom = ConsoleSize.Y - 3; // bot. right: row 2, col 120 
-	for (int i = 0; i < (ConsoleSize.X); ++i) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
+	for (int i = 0; i < (ConsoleSize.X); ++i) chiBuffer[i].Attributes = (WORD)((ColorLastStr << 4) | White);
 	fSuccess = WriteConsoleOutput(
 		hStdout, // screen buffer to write to 
 		chiBuffer,        // buffer to copy from 
@@ -66,7 +66,7 @@ void readBlockDown()
 		&srctReadRect);  // dest. screen buffer rectangle 
 	delete[] chiBuffer;
 }
-void readBlockUp()
+void readBlockUp(ConsoleColor ColorLastStr)
 {
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect;
@@ -92,7 +92,7 @@ void readBlockUp()
 		&srctReadRect); // screen buffer source rectangle 
 	srctReadRect.Top = 2;    // top left: row 2, col 1 
 	srctReadRect.Bottom = ConsoleSize.Y - 4; // bot. right: row 2, col 120 
-	for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[size - i - 1].Attributes = (WORD)((Blue << 4) | White);
+	for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[size - i - 1].Attributes = (WORD)((ColorLastStr << 4) | White);
 	fSuccess = WriteConsoleOutput(
 		hStdout, // screen buffer to write to 
 		chiBuffer,        // buffer to copy from 
