@@ -1,5 +1,4 @@
-﻿
-#include <stdio.h> 
+﻿#include <stdio.h> 
 #include <stdlib.h>
 #include <io.h>  
 #include <iostream>
@@ -15,7 +14,6 @@
 #include "ffiles.h"
 
 using namespace std;
-
 
 bool loadConsoleFrame(char *FileName)
 {
@@ -163,7 +161,7 @@ void txtRead(char * FileName, _fsize_t FileSize)
 		SetCursorPosition((ConsoleSize.X - length) / 2, 1);
 		printf("%s", FileName);
 	}
-	char * text = new char[ConsoleSize.X - 2];
+	unsigned char * text = new unsigned char[ConsoleSize.X - 2];
 	char *clrStr = new char[ConsoleSize.X - 1];
 	for (int i = 0; i < ConsoleSize.X - 2; ++i)
 		clrStr[i] = ' ';
@@ -186,7 +184,8 @@ void txtRead(char * FileName, _fsize_t FileSize)
 				break;
 			}
 			else
-				if (((text[j] >= 0x00) && (text[j] <= 0x0f)) || (text[j] == 0x95)) printf(".");
+				if (((text[j] >= 0x00) && (text[j] <= 0x0f)) || (text[j] == 0x95))
+					printf(".");
 				else printf("%c", text[j]);
 		}
 		if (nextStr) downPos += tmp + 1;

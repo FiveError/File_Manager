@@ -1,7 +1,4 @@
-﻿  main.cpp
-  fm.cpp
-c:\projects\filemanager\file_manager\file manager\fm.cpp(77): warning C4309: =: усечение константного значения
-c:\projects\filemanager\file_manager\file manager\fm.cpp(91): warning C4309: =: усечение константного значения
-  Создание кода...
-ffiles.obj : warning LNK4075: не учитывается "/EDITANDCONTINUE" из-за спецификации "/OPT:LBR"
+﻿  fm.cpp
+c:\projects\filemanager\file_manager\file manager\fm.cpp(75): warning C4309: =: усечение константного значения
+c:\projects\filemanager\file_manager\file manager\fm.cpp(89): warning C4309: =: усечение константного значения
   file manager.vcxproj -> C:\Projects\FileManager\File_Manager\Debug\file manager.exe
