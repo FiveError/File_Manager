@@ -164,13 +164,17 @@ void txtRead(char * FileName, _fsize_t FileSize)
 		printf("%s", FileName);
 	}
 	char * text = new char[ConsoleSize.X - 2];
+	char *clrStr = new char[ConsoleSize.X - 1];
+	for (int i = 0; i < ConsoleSize.X - 2; ++i)
+		clrStr[i] = ' ';
+	clrStr[ConsoleSize.X - 2] = '\0';
 	int downPos = 0, tmp,upPos = 0;
 	bool nextStr;
 	SetColor(Green, White);
-	for (int i = 0; i < ConsoleSize.Y - 4; ++i)
+	for (int i = 0; i < ConsoleSize.Y - 5; ++i)
 	{
 		nextStr = false;
-		SetCursorPosition(1, 1 + i);
+		SetCursorPosition(1, 2 + i);
 		fseek(fTxt, downPos, SEEK_SET);
 		fread(text, ConsoleSize.X - 2, sizeof(char), fTxt);
 		for (int j = 0; j < ConsoleSize.X - 2; ++j)
@@ -199,6 +203,8 @@ void txtRead(char * FileName, _fsize_t FileSize)
 		case 80:
 			readBlockUp(Green);
 			SetCursorPosition(1, ConsoleSize.Y - 4);
+			printf("%s", clrStr);
+			SetCursorPosition(1, ConsoleSize.Y - 4);
 			fseek(fTxt, downPos, SEEK_SET);
 			fread(text, ConsoleSize.X - 2, sizeof(char), fTxt);
 			for (int j = 0; j < ConsoleSize.X - 2; ++j)
@@ -218,7 +224,7 @@ void txtRead(char * FileName, _fsize_t FileSize)
 			break;
 		case 72:
 			readBlockDown(Green);
-			SetCursorPosition(1, 1);
+			SetCursorPosition(1, 2);
 			fseek(fTxt, downPos, SEEK_SET);
 			fread(text, ConsoleSize.X - 2, sizeof(char), fTxt);	
 			for (int j = 0; j < ConsoleSize.X - 2; ++j)
@@ -245,6 +251,8 @@ void txtRead(char * FileName, _fsize_t FileSize)
 	hideWindow(chiBuffer, top, left, bottom, right);
 	fclose(fTxt);
 	delete[] chiBuffer;
+	delete[] text;
+	delete[] clrStr;
 }
 void saveConsoleToFile(char *FileName)
 {
@@ -634,11 +642,10 @@ void selectDisk(int CrntStr, bool select)
 {
 	HANDLE hStdout;
 	SMALL_RECT srctReadRect;
-	CHAR_INFO *chiBuffer = new CHAR_INFO[ConsoleSize.X - 2]; // [1][122]; 
+	CHAR_INFO *chiBuffer = new CHAR_INFO[8]; // [1][122]; 
 	COORD coordBufSize;
 	COORD coordBufCoord;												/*Чтение из консоли*/
 	hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-	chiBuffer = new CHAR_INFO[8];
 	srctReadRect.Top = ConsoleSize.Y / 2 - 13 + CrntStr;    // top left: row 2, col 1 
 	srctReadRect.Left = ConsoleSize.X / 2 - 4;
 	srctReadRect.Bottom = ConsoleSize.Y / 2 - 13 + CrntStr; // bot. right: row 2, col 120 
@@ -680,7 +687,7 @@ void listDisk(bool *Disk)
 	}
 
 }
-void chooseDisk(bool *Disk)
+bool chooseDisk(bool *Disk)
 {
 	int j = 0, CrntStr = 0, kolve = 0, key = 0, podkl = 0;
 	CHAR_INFO *chiBuffer = new CHAR_INFO[10 * 29];
@@ -742,10 +749,14 @@ void chooseDisk(bool *Disk)
 				{
 					char path[5] = "C:\\";
 					*path = 65 + i;
-					_chdir(path);
+					if (_chdir(path) == -1)
+					{
+						showError("Не получается подключиться к данному диску", "");
+						break;
+					}
 					hideWindow(chiBuffer, top, left, bottom, right);
 					delete[] chiBuffer;
-					return;
+					return true;
 				}
 			}
 		}
@@ -753,4 +764,5 @@ void chooseDisk(bool *Disk)
 
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;
+	return false;
 }

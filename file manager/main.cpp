@@ -137,7 +137,7 @@ void preOptions(const char *argv[])
 }
 
 									//деление делаем сдвигом :)
-									// printf("%.*s", dlina,str);   :)
+									//printf("%.*s", dlina,str);   :)
 
 
 int main(int argc, const char * argv[]) 
@@ -283,7 +283,7 @@ int main(int argc, const char * argv[])
 						dist = fopen(fCopy, "wb");
 						FileCopy(source, dist);
 						fclose(dist);
-						addElement(&flast, &fCrnt, fCopy, &CrntStr);
+						addElement(&flast, &fCrnt, fCopy, &CrntStr, NULL);
 						memcpy(fCopy, buffer, 260);
 						addLog(fCopy, "COPY", "Успешно скопирован");
 					}
@@ -294,7 +294,7 @@ int main(int argc, const char * argv[])
 						{
 							if (pathCopy[i] != CrntPath[i])
 							{
-								if (FolderCopy(pathCopy, fCopy)) addElement(&flast, &fCrnt, fCopy, &CrntStr);
+								if (FolderCopy(pathCopy, fCopy)) addElement(&flast, &fCrnt, fCopy, &CrntStr, NULL);
 								addLog(fCopy, "COPY", "Успешно скопирован");
 								error = FALSE;
 								break;
@@ -309,8 +309,12 @@ int main(int argc, const char * argv[])
 					break;
 				case 64:
 					listDisk(Disk);
-					chooseDisk(Disk);
-					RefreshFiles(&flast, &CrntStr, &fCrnt);
+					if (chooseDisk(Disk))
+					{
+						_getcwd(CrntPath, MAX_PATH);
+						RefreshFiles(&flast, &CrntStr, &fCrnt);
+						showPath(CrntPath);
+					}
 					break;
 				case 65:    //F7
 					huffman(fCrnt->file.name);
@@ -333,11 +337,20 @@ int main(int argc, const char * argv[])
 						else
 							if (remove(fCrnt->file.name) == -1) showError("Данный файл не может быть удален", "");
 							else addLog(fCrnt->file.name, "INFO", "Удален");
-						deleteBlockUp(CrntStr);
-						deleteElement(&fCrnt);
-						CrntStr--;
-						readStringFromConsole(CrntStr, Cyan, White);
-						showLastStr(fCrnt, CrntStr);
+							if (deleteBlockUp(CrntStr))
+							{
+								deleteElement(&fCrnt);
+								CrntStr--;
+								readStringFromConsole(CrntStr, Cyan, White);
+								showLastStr(fCrnt, CrntStr);
+							}
+							else
+							{
+								deleteElement(&fCrnt);
+								SetColor(Cyan, White);
+								showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, 2, FALSE);
+							}
+				
 					}
 				default:
 					break;

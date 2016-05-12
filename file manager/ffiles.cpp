@@ -458,6 +458,7 @@ void getLogPath(const char *argv[])
 void ExistFile(char(*str)[260])
 {
 	int i;
+	char *str1, *str2;
 	for (i = 0; (*str)[i]; ++i);
 	if (i > 256)
 	{
@@ -465,13 +466,24 @@ void ExistFile(char(*str)[260])
 		return;
 	}
 	int k = i;
-	for (; (*str)[k] != '.'; --k);
-	char *str1 = new char[k + 2];
-	char *str2 = new char[i - k + 2];
-	memcpy(str1, *str, k);
-	str1[k] = '\0';
-	memcpy(str2, (*str) + k, i - k);
-	str2[i - k] = '\0';
+	for (; ((k != -1) && (*str)[k] != '.'); --k);
+	if (k == -1)
+	{
+		str1 = new char[i + 1];
+		str2 = new char[1];
+		memcpy(str1, *str, i);
+		str1[i] = '\0';
+		str2[0] = '\0';
+	}
+	else
+	{
+		str1 = new char[k + 2];
+		str2 = new char[i - k + 2];
+		memcpy(str1, *str, k);
+		str1[k] = '\0';
+		memcpy(str2, (*str) + k, i - k);
+		str2[i - k] = '\0';
+	}
 	i = 1;
 	FILE *f;
 	while (1)
@@ -492,7 +504,7 @@ void newFolder(files **flast, files ** fCrnt, int *CrntStr)
 	if (!_mkdir(str1))
 	{
 		renameWindow(str1);
-		addElement(flast, fCrnt,str1 , CrntStr);
+		addElement(flast, fCrnt,str1 , CrntStr, NULL);
 		return;
 	}
 	char str[25];
@@ -503,7 +515,7 @@ void newFolder(files **flast, files ** fCrnt, int *CrntStr)
 		i++;
 	}
 	renameWindow(str);
-	addElement(flast, fCrnt, str, CrntStr);
+	addElement(flast, fCrnt, str, CrntStr, NULL);
 
 }
 void deleteFolder(char *path)
@@ -582,7 +594,7 @@ bool FolderCopy(char *path, char *fCopy)
 	return makedir;
 }
 
-void addElement(files ** flast, files **fCrnt, char * FileName, int *CrntStr)
+int addElement(files ** flast, files **fCrnt, char * FileName, int *CrntStr, files **newCurrent)
 {
 	files *current;
 	char *crntName;
@@ -601,11 +613,20 @@ void addElement(files ** flast, files **fCrnt, char * FileName, int *CrntStr)
 	}
 	if ((i<0) && (*CrntStr + 3 + i > 2	))
 	{
-		addBlockDown(*CrntStr + 3 + i);
-		showStr(FileName, current->file.size, current->file.attrib,  *CrntStr + 3 + i, FALSE);
-		(*CrntStr)++;
+		if (*CrntStr < ConsoleSize.Y - 6) {
+			addBlockDown(*CrntStr + 3 + i);
+			showStr(FileName, current->file.size, current->file.attrib, *CrntStr + 3 + i, FALSE);
+			(*CrntStr)++;
+		}
+		else
+		{
+			addBlockUp(*CrntStr + 3 + i);
+			showStr(FileName, current->file.size, current->file.attrib, *CrntStr + 2 + i, FALSE);
+		}
 	}
+	if (newCurrent) *newCurrent = current;
 	delete[] crntName;
+	return i;
 }
 void afterRename(files ** flast, files ** fCrnt, int * CrntStr)
 {
@@ -618,8 +639,19 @@ void afterRename(files ** flast, files ** fCrnt, int * CrntStr)
 	*fCrnt = (*fCrnt)->prev;
 	deleteBlockUp(*CrntStr);
 	(*CrntStr)--;
-	addElement(flast, fCrnt, newName, CrntStr);
-	showLastStr(*fCrnt, (*CrntStr));
+	files *current;
+	length = addElement(flast, fCrnt, newName, CrntStr, &current);
+	if (!(((length > 0) && (length + *CrntStr < ConsoleSize.Y - 5)) || ((length < 0) && (*CrntStr + 3 + length > 2))))
+	{
+		show(current);
+		*CrntStr = 0;
+	}
+	else
+	{
+		showLastStr(*fCrnt, (*CrntStr));
+		*CrntStr += length;
+	}
+	*fCrnt = current;
 	delete[] newName;
 }
 void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder, unsigned int *sizeFolder)

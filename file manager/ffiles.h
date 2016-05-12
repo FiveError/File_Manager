@@ -24,7 +24,7 @@ void ExistFile(char(*str)[260]);
 void newFolder(files **flast, files ** fCrnt, int *CrntStr);
 void deleteFolder(char * path);
 bool FolderCopy(char * path, char * fCopy);
-void addElement(files ** flast, files **fCrnt, char * FileName, int *CrntStr);
+int addElement(files ** flast, files **fCrnt, char * FileName, int *CrntStr, files ** newCurrent);
 void afterRename(files ** flast, files **fCrnt, int *CrntStr);
 void CountFileFolder(char * FolderPath, unsigned int * countFile, unsigned int * countFolder, unsigned int *sizeFolder);
 
