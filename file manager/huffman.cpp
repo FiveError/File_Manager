@@ -101,6 +101,7 @@ void huffman(char * Filename)
 }
 void unhuffman(char *Filename)
 {
+	bool enter = true;
 	if (*(Filename + strlen(Filename)-1) == 'h')
 	{
 		vector<Node> tree;
@@ -137,6 +138,20 @@ void unhuffman(char *Filename)
 			{
 				if (kolvo--)
 				{
+					if (tree[n].ch == '\n' && enter)
+					{
+						f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
+						n = tree.size() - 1;
+						kolvo++;
+						enter = false;
+						continue;
+					}
+					if (tree[n].ch == '\n' && !enter)
+					{
+						enter = true;
+						n = tree.size() - 1;
+						continue;
+					}	
 					f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
 					n = tree.size() - 1;
 				}
