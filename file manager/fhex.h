@@ -12,4 +12,5 @@ void printChar(unsigned char c);
 void showStrHEX(FILE * fHex, unsigned int adress, int CrntStr, int CharCount);
 void showAllHEX(FILE * fHex, int adress);
 void runHEX(char * FileName, _fsize_t FileSize);
-void searchHEX(FILE * HexFile);
+bool searchWindowHEX(unsigned char instring[36]);
+bool searchHEX(FILE *fHex, unsigned char instring[36], unsigned int * adress, int * CrntStl);
