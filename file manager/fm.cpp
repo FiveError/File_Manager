@@ -132,6 +132,10 @@ void ConsoleFrame()
 	printf(" ");
 	SetColor(Red, White);
 	printf("F9-DELETE");
+	SetColor(Black, White);
+	printf(" ");
+	SetColor(Red, White);
+	printf("F10-REFRESH");
 	setlocale(LC_CTYPE, "RUS");
 }
 void txtRead(char * FileName, _fsize_t FileSize)

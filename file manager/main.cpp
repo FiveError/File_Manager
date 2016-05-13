@@ -329,29 +329,34 @@ int main(int argc, const char * argv[])
 					else
 					{
 						if (exitFM("Вы точно хотите удалить?", Red))
-						if (fCrnt->file.attrib & _A_SUBDIR)
 						{
-							deleteFolder(fCrnt->file.name);
-							addLog(fCrnt->file.name, "INFO", "Удалена");
-						}																			
-						else
-							if (remove(fCrnt->file.name) == -1) showError("Данный файл не может быть удален", "");
-							else addLog(fCrnt->file.name, "INFO", "Удален");
-							if (deleteBlockUp(CrntStr))
+							if (fCrnt->file.attrib & _A_SUBDIR)
 							{
-								deleteElement(&fCrnt);
-								CrntStr--;
-								readStringFromConsole(CrntStr, Cyan, White);
-								showLastStr(fCrnt, CrntStr);
+								deleteFolder(fCrnt->file.name);
+								addLog(fCrnt->file.name, "INFO", "Удалена");
 							}
 							else
-							{
-								deleteElement(&fCrnt);
-								SetColor(Cyan, White);
-								showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, 2, FALSE);
-							}
-				
+								if (remove(fCrnt->file.name) == -1) showError("Данный файл не может быть удален", "");
+								else addLog(fCrnt->file.name, "INFO", "Удален");
+								if (deleteBlockUp(CrntStr))
+								{
+									deleteElement(&fCrnt);
+									CrntStr--;
+									readStringFromConsole(CrntStr, Cyan, White);
+									showLastStr(fCrnt, CrntStr);
+								}
+								else
+								{
+									deleteElement(&fCrnt);
+									SetColor(Cyan, White);
+									showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, 2, FALSE);
+								}
+						}
+						break;
 					}
+				case 68:
+					RefreshFiles(&flast, &CrntStr, &fCrnt);
+					break;
 				default:
 					break;
 				}

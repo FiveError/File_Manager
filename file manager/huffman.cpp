@@ -28,6 +28,7 @@ void huffman(char * Filename)
 			f.read((char *)&ch, sizeof(ch));
 			++weight[ch];
 		}
+		f.close();
 	}
 
 	multimap<int, int> sortedWeight;
@@ -61,22 +62,23 @@ void huffman(char * Filename)
 	vector<bool> data;
 	
 	{
-	ifstream f(Filename, ios::binary);
-	while (!f.eof())
-	{
-		unsigned char ch;
-		f.read((char *)&ch, sizeof(ch));
-		vector<bool> compressedChar;
-		auto n = tree[charMap[ch]];
-		
-		while (n.parent != -1)
+		ifstream f(Filename, ios::binary);
+		while (!f.eof())
 		{
-			compressedChar.push_back(n.branch);
-			n = tree[n.parent];
+			unsigned char ch;
+			f.read((char *)&ch, sizeof(ch));
+			vector<bool> compressedChar;
+			auto n = tree[charMap[ch]];
+			
+			while (n.parent != -1)
+			{
+				compressedChar.push_back(n.branch);
+				n = tree[n.parent];
+			}
+			data.insert(end(data), compressedChar.rbegin(), compressedChar.rend());
 		}
-		data.insert(end(data), compressedChar.rbegin(), compressedChar.rend());
+		f.close();
 	}
-}
 	int len = strlen(Filename);
 	memset(Filename + strlen(Filename), 'h' , 1);
 	*(Filename + len + 1) = '\0';
@@ -97,7 +99,7 @@ void huffman(char * Filename)
 				ch |= (1 << j);
 		f.write((char*)&ch, sizeof(ch));
 	}
-	
+	f.close();
 }
 void unhuffman(char *Filename)
 {
@@ -158,5 +160,7 @@ void unhuffman(char *Filename)
 				else break;
 			}
 		}
+		f.close();
+		f1.close();
 	}
 }

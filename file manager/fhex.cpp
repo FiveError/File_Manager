@@ -165,7 +165,7 @@ void readBlockDownHEX()
 	srctReadRect.Top = 3;    // top left: row 2, col 1 
 	srctReadRect.Bottom = ConsoleSize.Y - 3; // bot. right: row 2, col 120 
 
-												  //for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
+											 //for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
 	WriteConsoleOutput(
 		hStdout, // screen buffer to write to 
 		chiBuffer,        // buffer to copy from 
@@ -202,7 +202,7 @@ void readBlockUpHEX()
 	srctReadRect.Top = 2;    // top left: row 2, col 1 
 	srctReadRect.Bottom = ConsoleSize.Y - 4; // bot. right: row 2, col 120 
 
-												  //for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
+											 //for (int i = 0; i < (ConsoleSize.X); i++) chiBuffer[i].Attributes = (WORD)((Blue << 4) | White);
 	WriteConsoleOutput(
 		hStdout, // screen buffer to write to 
 		chiBuffer,        // buffer to copy from 
@@ -215,8 +215,8 @@ void showStrHEX(FILE * fHex, unsigned int adress, int CrntStr, int CharCount)
 {
 	fseek(fHex, adress * 16, SEEK_SET);
 	unsigned char *ch = new unsigned char[CharCount];
-	fread(ch, CharCount,sizeof(char), fHex);
-	SetCursorPosition(ConsoleSize.X / 2 - 38,  2 + CrntStr);
+	fread(ch, CharCount, sizeof(char), fHex);
+	SetCursorPosition(ConsoleSize.X / 2 - 38, 2 + CrntStr);
 	SetColor(Magenta, Yellow);
 	printf("%08X  ", adress);
 	SetColor(Magenta, White);
@@ -229,7 +229,7 @@ void showStrHEX(FILE * fHex, unsigned int adress, int CrntStr, int CharCount)
 	delete[] ch;
 	if (CharCount < 16)
 	{
-		SetCursorPosition(ConsoleSize.X / 2 - 28 + 3*CharCount, 2 + CrntStr);
+		SetCursorPosition(ConsoleSize.X / 2 - 28 + 3 * CharCount, 2 + CrntStr);
 		for (int i = CharCount; i < 16; i++) printf("   ");
 		SetCursorPosition(ConsoleSize.X / 2 + 21 + CharCount, 2 + CrntStr);
 		for (int i = CharCount; i < 16; i++) printf(" ");
@@ -250,8 +250,8 @@ void showAllHEX(FILE * fHex, int adress)
 			printf("%02X ", ch[i * 16 + j]);
 		printf(" ");
 		SetColor(Magenta, Yellow);
-		for (int j = 0; j < 16; ++j)	
-			printChar(ch[i * 16 + j]);	
+		for (int j = 0; j < 16; ++j)
+			printChar(ch[i * 16 + j]);
 	}
 	delete[] ch;
 }
@@ -392,7 +392,7 @@ void runHEX(char *FileName, _fsize_t FileSize)
 						}
 						CrntStl++;
 						CrntStr = 0;
-						
+
 					}
 					selectHEX(CrntStr, CrntStl, true);
 				}
@@ -409,7 +409,7 @@ void runHEX(char *FileName, _fsize_t FileSize)
 			{
 				fseek(fHex, adress * 16 + CrntStl, SEEK_SET);
 				if (fread(&c, 1, sizeof(char), fHex))
-				c = c % 16 + key * 16;
+					c = c % 16 + key * 16;
 				else c = key * 16;
 				fseek(fHex, adress * 16 + CrntStl, SEEK_SET);
 				fwrite(&c, 1, sizeof(char), fHex);
@@ -469,67 +469,67 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	delete[] chiBuffer;
 }
 bool searchWindowHEX(unsigned char instring[36])
+{
+	EnableCursor(true);
+	CHAR_INFO *chiBuffer = new CHAR_INFO[40 * 10];
+	short top = ConsoleSize.Y / 2 - 5;
+	short bottom = ConsoleSize.Y / 2 + 5;
+	short left = ConsoleSize.X / 2 - 20;
+	short right = ConsoleSize.X / 2 + 20;
+	showWindow(&chiBuffer, top, left, bottom, right, DarkGray);
+	SetCursorPosition(left + 1, top + 2);
+	printf("S");
+	SetCursorPosition(left + 3, top + 2);
+	SetColor(Black, White);
+	printf("                                   ");
+	SetCursorPosition(left + 1, top + 4);
+	SetColor(DarkGray, White);
+	printf("H");
+	SetColor(Black, White);
+	SetCursorPosition(left + 3, top + 4);
+	printf("                                   ");
+	SetCursorPosition(left + 3, top + 5);
+	printf("                                   ");
+	SetCursorPosition(left + 3, top + 6);
+	printf("                                   ");
+	SetColor(DarkGray, White);
+	SetCursorPosition(left + 4, top + 8);
+	SetColor(White, DarkGray);
+	printf(" Enter - Искать ");
+	SetCursorPosition(left + 3, top + 2);
+	SetColor(Black, White);
+	bool bSearch = true, bString = true;
+	char htos[2];
+	setlocale(LC_CTYPE, "RUS");
+	int key, i = 0, j = 0, hStr = 0;
+	do
 	{
-		EnableCursor(true);
-		CHAR_INFO *chiBuffer = new CHAR_INFO[40 * 10];
-		short top = ConsoleSize.Y / 2 - 5;
-		short bottom = ConsoleSize.Y / 2 + 5;
-		short left = ConsoleSize.X / 2 - 20;
-		short right = ConsoleSize.X / 2 + 20;
-		showWindow(&chiBuffer, top, left, bottom, right, DarkGray);
-		SetCursorPosition(left + 1, top + 2);
-		printf("S");
-		SetCursorPosition(left + 3, top + 2);
-		SetColor(Black, White);
-		printf("                                   ");
-		SetCursorPosition(left + 1, top + 4);
-		SetColor(DarkGray, White);
-		printf("H");
-		SetColor(Black, White);
-		SetCursorPosition(left + 3, top + 4);
-		printf("                                   ");
-		SetCursorPosition(left + 3, top + 5);
-		printf("                                   ");
-		SetCursorPosition(left + 3, top + 6);
-		printf("                                   ");
-		SetColor(DarkGray, White);
-		SetCursorPosition(left + 4, top + 8);
-		SetColor(White, DarkGray);
-		printf(" Enter - Искать ");
-		SetCursorPosition(left + 3, top + 2);
-		SetColor(Black, White);
-		bool bSearch = true, bString = true;
-		char htos[2];
-		setlocale(LC_CTYPE, "RUS");
-		int key, i = 0, j = 0, hStr = 0;
-		do
+		key = _getch();
+		if (key == 224)
 		{
 			key = _getch();
-			if (key == 224)
+			switch (key)
 			{
-				key = _getch();
-				switch (key)
-				{
 
-				case 80:
-					SetCursorPosition(left + 3 + 3 * i, top + 4);
-					bString = false;
-					break;
-				case 72:
-					SetCursorPosition(left + 3 + i, top + 2);
-					bString = true;
-				default:
-					break;
-				}
+			case 80:
+				SetCursorPosition(left + 3 + 3 * i, top + 4);
+				bString = false;
+				break;
+			case 72:
+				SetCursorPosition(left + 3 + i, top + 2);
+				bString = true;
+			default:
+				break;
 			}
-			else
-			if ((((key > 31) && (key < 124)) || ((key > 127) && (key <= 255))) && (i < 35)) 
+		}
+		else
+			if ((((key > 31) && (key < 124)) || ((key > 127) && (key <= 255))) && (i < 35))
 			{
 				if (bString)
 				{
 					printf("%c", key);
 					hStr = i / 12;
-					SetCursorPosition(left + 3 + 3 * i - 36 * hStr , top + 4 + hStr);
+					SetCursorPosition(left + 3 + 3 * i - 36 * hStr, top + 4 + hStr);
 					printf("%X", key);
 					i++;
 					SetCursorPosition(left + 3 + i, top + 2);
@@ -557,43 +557,43 @@ bool searchWindowHEX(unsigned char instring[36])
 					}
 				}
 			}
-			if ((key == 8) && (i > 0))
+		if ((key == 8) && (i > 0))
+		{
+			if (j == 0)
 			{
-				if (j == 0)
-				{
-					SetCursorPosition(left + 2 + i, top + 2);
-					printf(" ");
-					i--;
-					hStr = i / 12;
-					SetCursorPosition(left + 3 + 3 * i - 36 * hStr, top + 4 + hStr);
-					printf("  ");
-					sprintf((char*)instring + i, "\0");
-					if (bString)
-						SetCursorPosition(left + 3 + i, top + 2);
-					else
-						SetCursorPosition(left + 3 + 3 * i - 36 * hStr + j, top + 4 + hStr);
-				}
+				SetCursorPosition(left + 2 + i, top + 2);
+				printf(" ");
+				i--;
+				hStr = i / 12;
+				SetCursorPosition(left + 3 + 3 * i - 36 * hStr, top + 4 + hStr);
+				printf("  ");
+				sprintf((char*)instring + i, "\0");
+				if (bString)
+					SetCursorPosition(left + 3 + i, top + 2);
 				else
-				{
-					j = 0;
-					hStr = i / 12;
 					SetCursorPosition(left + 3 + 3 * i - 36 * hStr + j, top + 4 + hStr);
-					printf(" ");
-					SetCursorPosition(left + 3 + 3 * i - 36 * hStr + j, top + 4 + hStr);
-				}
 			}
-			if (key == 13)
+			else
 			{
-				hideWindow(chiBuffer, top, left, bottom, right);
-				delete[] chiBuffer;
-				EnableCursor(false);
-				return true;
+				j = 0;
+				hStr = i / 12;
+				SetCursorPosition(left + 3 + 3 * i - 36 * hStr + j, top + 4 + hStr);
+				printf(" ");
+				SetCursorPosition(left + 3 + 3 * i - 36 * hStr + j, top + 4 + hStr);
 			}
-		} while (key != 27);
-		hideWindow(chiBuffer, top, left, bottom, right);
-		delete[] chiBuffer;
-		EnableCursor(false);
-		return false;
+		}
+		if (key == 13)
+		{
+			hideWindow(chiBuffer, top, left, bottom, right);
+			delete[] chiBuffer;
+			EnableCursor(false);
+			return true;
+		}
+	} while (key != 27);
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+	EnableCursor(false);
+	return false;
 }
 bool searchHEX(FILE *fHex, unsigned char instring[36], unsigned int * adress, int * CrntStl)
 {
@@ -612,15 +612,15 @@ bool searchHEX(FILE *fHex, unsigned char instring[36], unsigned int * adress, in
 		fseek(fHex, (*adress) * 16 + (*CrntStl) + 1, SEEK_SET);
 		fread(&c, 1, sizeof(char), fHex);
 		if (instring[0] == c)
-		for (int i = 1; instring[i]; ++i)
-		{
-			fread(&c, 1, sizeof(char), fHex);
-			if (instring[i] != c)
+			for (int i = 1; instring[i]; ++i)
 			{
-				poisk = false;
-				break;
+				fread(&c, 1, sizeof(char), fHex);
+				if (instring[i] != c)
+				{
+					poisk = false;
+					break;
+				}
 			}
-		}
 		else poisk = false;
 		if (poisk) return true;
 		if (*CrntStl == 15)
