@@ -20,7 +20,7 @@ enum ConsoleColor {
 
 extern COORD ConsoleSize;
 
-extern char *logFile, *frameFile, *clearStr;
+extern char *logFile, *frameFile, *clearStr,*helpFile;
 struct files {
 	_finddata_t file;
 	files *prev;

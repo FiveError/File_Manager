@@ -18,7 +18,7 @@
 #pragma pack(1)
                                
 using namespace std;
- char *logFile, *frameFile, *clearStr;
+ char *logFile, *frameFile, *clearStr,*helpFile;
  COORD ConsoleSize = { 122,40 };
 
 void savePath(char *FileName, char CrntPath[260], char **prevPath)
@@ -121,6 +121,7 @@ bool exitFM(char * buffer, ConsoleColor background)
 void preOptions(const char *argv[])
 {
 	getLogPath(argv);
+	getHelpPath(argv);
 	getFramePath(argv);
 	SetBufferSize();
 	saveClearStr();
@@ -233,9 +234,8 @@ int main(int argc, const char * argv[])
 				key = _getch();
 				switch (key)
 				{
-				case 59: 
-					showError("Вы нажали не на ту клавишу", "О БОЖЕ!!!");
-					addLog("Нажата клавиша ошибки", "ERROR");
+				case 59: //F1
+					HelpWindow(helpFile);
 					break;
 				case 60:             //F2
 					if (renameWindow(fCrnt->file.name))
@@ -363,6 +363,34 @@ int main(int argc, const char * argv[])
 				break;
 			case 't':
 				txtRead(fCrnt->file.name, fCrnt->file.size);
+				break;
+			case 49:
+			    ConsoleSize = { 80,25 };
+				getFramePath(argv);
+				SetBufferSize();
+				saveClearStr();
+				RefreshFiles(&flast, &CrntStr, &fCrnt);
+				break;
+			case 50:
+				ConsoleSize = { 122,40 };
+				getFramePath(argv);
+				SetBufferSize();
+				saveClearStr();
+				RefreshFiles(&flast, &CrntStr, &fCrnt);
+				break;
+			case 51:
+				ConsoleSize = { 206,70 };
+				getFramePath(argv);
+				SetBufferSize();
+				saveClearStr();
+				RefreshFiles(&flast, &CrntStr, &fCrnt);
+				break;
+			case 52:
+				ConsoleSize = { 248,70 };
+				getFramePath(argv);
+				SetBufferSize();
+				saveClearStr();
+				RefreshFiles(&flast, &CrntStr, &fCrnt);
 				break;
 			case 27:
 				if (!exitFM("Вы точно хотите выйти?", Green)) key = 1;

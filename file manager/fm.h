@@ -14,5 +14,6 @@ void showError(char * buffer1, char * buffer2);
 void selectDisk(int CrntStr, bool select);
 void listDisk(bool * Disk);
 bool chooseDisk(bool * Disk);
+void HelpWindow(char *FileHelp);
 void ConsoleFrame();
 void txtRead(char * FileName, _fsize_t FileSize);

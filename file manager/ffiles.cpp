@@ -453,7 +453,17 @@ void getLogPath(const char *argv[])
 	i -= 4;
 	logFile = new char[i];
 	memcpy(logFile, argv[0], i - 12);
-	memcpy(logFile + i - 12, "logFile.log", 12);
+	memcpy(logFile + i - 12, "logFile.ini", 12);
+}
+void getHelpPath(const char *argv[])
+{
+	int i;
+	for (i = 0; argv[0][i]; ++i);
+	i -= 4;
+	helpFile = new char[i-8];
+	memcpy(helpFile, argv[0], i - 12);
+	memcpy(helpFile + i - 12, "help.ini", 8);
+	helpFile[i-4] = '\0';
 }
 void ExistFile(char(*str)[260])
 {
@@ -656,6 +666,7 @@ void afterRename(files ** flast, files ** fCrnt, int * CrntStr)
 }
 void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder, unsigned int *sizeFolder)
 {
+	std::this_thread::sleep_for(std::chrono::microseconds(20));
 		int sucsess = _chdir(FolderPath);
 		if (!sucsess)
 		{

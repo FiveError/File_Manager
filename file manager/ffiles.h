@@ -20,6 +20,7 @@ void RefreshFiles(files ** flast, int * CrntStr, files ** fCrnt);
 void RefreshFiles(files ** flast, int * CrntStr, files ** fCrnt, char ** prevPath);
 void addLog(char * message, char * typemessage, char * extramessage = "" );
 void getLogPath(const char * argv[]);
+void getHelpPath(const char * argv[]);
 void ExistFile(char(*str)[260]);
 void newFolder(files **flast, files ** fCrnt, int *CrntStr);
 void deleteFolder(char * path);

@@ -769,3 +769,31 @@ bool chooseDisk(bool *Disk)
 	delete[] chiBuffer;
 	return false;
 }
+void HelpWindow(char * FileHelp)
+{
+	FILE *fHelp;
+	int i = 1;
+	char buffer;
+	fHelp = fopen(FileHelp, "r");
+	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * (ConsoleSize.Y - 2)];
+	short top = 0;
+	short bottom = ConsoleSize.Y - 2;
+	short left = ConsoleSize.X / 2 - 40;
+	short right = ConsoleSize.X / 2 + 40;
+	showWindow(&chiBuffer, top, left, bottom, right, Green);
+	SetCursorPosition(left + 1, top + 1);
+	while (!feof(fHelp))
+	{
+		fread(&buffer, 1, sizeof(char), fHelp);
+		if (buffer == '\n')
+		{
+			SetCursorPosition(left + 1, top + 1 + i );
+			i++;
+		}
+		else
+		printf("%c", buffer);
+	}
+	_getch();
+	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] chiBuffer;
+}
