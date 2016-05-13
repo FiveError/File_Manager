@@ -261,6 +261,60 @@ void printChar(unsigned char c)
 	else
 		printf("%c", c);
 }
+void showHelpHEX(CHAR_INFO **chiBuffer)
+{
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD coordBufSize;
+	coordBufSize.Y = 1;
+	coordBufSize.X = ConsoleSize.X;
+	SMALL_RECT srctReadRect;
+	srctReadRect.Bottom = ConsoleSize.Y;
+	srctReadRect.Left = 0;
+	srctReadRect.Right = ConsoleSize.X;
+	srctReadRect.Top = ConsoleSize.Y - 1;
+	COORD coordBufCoord;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	BOOL fSuccess;
+	fSuccess = ReadConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		*chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+	SetCursorPosition(0, ConsoleSize.Y - 1);
+	SetColor(Black, Black);
+	for (int i = 0; i < ConsoleSize.X - 1; ++i) printf(" ");
+	SetCursorPosition(0, ConsoleSize.Y - 1);
+	SetColor(Red, White);
+	printf("F1-SEARCH");
+	SetColor(Black, White);
+	printf(" ");
+	SetColor(Red, White);
+	printf("F2-CHANGEADRESS");
+}
+void hideHelpHEX(CHAR_INFO *chiBuffer)
+{
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD coordBufSize;
+	coordBufSize.Y = 1;
+	coordBufSize.X = ConsoleSize.X;
+	SMALL_RECT srctReadRect;
+	srctReadRect.Bottom = ConsoleSize.Y;
+	srctReadRect.Left = 0;
+	srctReadRect.Right = ConsoleSize.X;
+	srctReadRect.Top = ConsoleSize.Y - 1;
+	COORD coordBufCoord;
+	coordBufCoord.X = 0;
+	coordBufCoord.Y = 0;
+	BOOL fSuccess;
+	fSuccess = WriteConsoleOutput(
+		hStdout,        // screen buffer to read from 
+		chiBuffer,      // buffer to copy into 
+		coordBufSize,   // col-row size of chiBuffer 
+		coordBufCoord,  // top left dest. cell in chiBuffer 
+		&srctReadRect); // screen buffer source rectangle 
+}
 void runHEX(char *FileName, _fsize_t FileSize)
 {
 	FILE *fHex;
@@ -269,6 +323,8 @@ void runHEX(char *FileName, _fsize_t FileSize)
 		showError("Ошибка открытия файла", "");
 		return;
 	}
+	CHAR_INFO *helpBuffer = new CHAR_INFO[ConsoleSize.X];
+	showHelpHEX(&helpBuffer);
 	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * (ConsoleSize.Y - 2)];
 	short top = 0;
 	short bottom = ConsoleSize.Y - 2;
@@ -397,6 +453,28 @@ void runHEX(char *FileName, _fsize_t FileSize)
 					selectHEX(CrntStr, CrntStl, true);
 				}
 				break;
+			case 60:
+				if (goToHEX(&adress, lastAdress))
+				{
+					if (lastAdress - adress > ConsoleSize.Y - 6) showAllHEX(fHex, adress);
+					else
+					{
+						CrntStr = adress;
+						for (; adress < lastAdress; adress++) showStrHEX(fHex, adress, adress - CrntStr, 16);
+						showStrHEX(fHex, adress, adress - CrntStr, lastStl - 1);
+						for (; adress - CrntStr < ConsoleSize.Y - 6; ++adress)
+						{
+							SetCursorPosition(ConsoleSize.X / 2 - 38, 3 + adress - CrntStr);
+							SetColor(Magenta, Yellow);
+							printf("                                                                           ");
+						}
+						adress = CrntStr;
+					}
+					CrntStl = 0;
+					CrntStr = 0;
+					selectHEX(CrntStr, CrntStl, true);
+				}
+				break;
 			default:
 				break;
 			}
@@ -465,7 +543,9 @@ void runHEX(char *FileName, _fsize_t FileSize)
 		}
 	} while (key != 27);
 	fclose(fHex);
+	hideHelpHEX(helpBuffer);
 	hideWindow(chiBuffer, top, left, bottom, right);
+	delete[] helpBuffer;
 	delete[] chiBuffer;
 }
 bool searchWindowHEX(unsigned char instring[36])
@@ -493,9 +573,12 @@ bool searchWindowHEX(unsigned char instring[36])
 	SetCursorPosition(left + 3, top + 6);
 	printf("                                   ");
 	SetColor(DarkGray, White);
-	SetCursorPosition(left + 4, top + 8);
+	SetCursorPosition(left + 3, top + 8);
 	SetColor(White, DarkGray);
 	printf(" Enter - Искать ");
+	SetCursorPosition(left + 20, top + 8);
+	SetColor(White, DarkGray);
+	printf(" ESC - Отмена ");
 	SetCursorPosition(left + 3, top + 2);
 	SetColor(Black, White);
 	bool bSearch = true, bString = true;
@@ -633,5 +716,58 @@ bool searchHEX(FILE *fHex, unsigned char instring[36], unsigned int * adress, in
 	*adress = prevAdress;
 	*CrntStl = prevCrntStl;
 	showError("Строка не найдена", "");
+	return false;
+}
+bool goToHEX(unsigned int *adress, unsigned int lastAdress)
+{
+	CHAR_INFO *chiBuffer = new CHAR_INFO[40 * 10];
+	short top = ConsoleSize.Y / 2 - 2;
+	short bottom = ConsoleSize.Y / 2 + 2;
+	short left = ConsoleSize.X / 2 - 20;
+	short right = ConsoleSize.X / 2 + 20;
+	showWindow(&chiBuffer, top, left, bottom, right, DarkGray);
+	SetColor(DarkGray, White);
+	SetCursorPosition(left + 2, top + 1);
+	printf("Введите адрес, куда хотите перейти");
+	SetColor(Black, White);
+	SetCursorPosition(left + 2, top + 2);
+	printf("%08X ", *adress);
+	EnableCursor(true);
+	int key, i = 8, prevAdress = *adress;
+	SetCursorPosition(left + 2 + i, top + 2);
+	do
+	{
+		key = _getch();
+		if ((key == 8) && (i > 0))
+		{
+			*adress /= 16;
+			SetCursorPosition(left + 1 + i, top + 2);
+			printf(" ");
+			SetCursorPosition(left + 1 + i, top + 2);
+			i--;
+		}
+		if (((key >= '0') && (key <= '9') || ((key >= 'a') && (key <= 'f'))) && (i < 8))
+		{
+			i++;
+			printf("%c", key);
+			*adress = *adress * 16 + key - '0';
+		}
+		if (key == 13)
+		{
+			if (*adress > lastAdress) showError("Слишком большой адрес", "");
+			else
+			{
+				hideWindow(chiBuffer, top, left, bottom, right);
+				EnableCursor(false);
+				delete[] chiBuffer;
+				return true;
+			}
+			SetColor(Black, White);
+		}
+	} while (key != 27);
+	hideWindow(chiBuffer, top, left, bottom, right);
+	*adress = prevAdress;
+	EnableCursor(false);
+	delete[] chiBuffer;
 	return false;
 }

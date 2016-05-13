@@ -792,7 +792,7 @@ void HelpWindow(char * FileHelp)
 		}
 		else
 		printf("%c", buffer);
-	}
+		}
 	_getch();
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] chiBuffer;

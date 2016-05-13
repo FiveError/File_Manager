@@ -130,7 +130,7 @@ void preOptions(const char *argv[])
 		ConsoleFrame();
 		saveConsoleToFile(frameFile);
 	}
-	SetConsoleTitle(L"File Manager");
+	SetConsoleTitle(L"File Manager by Farid and Sergey");
 	addLog("Программа запущена", "INFO");
 	EnableCursor(false);
 	_chdir("C:\\");
@@ -243,7 +243,6 @@ int main(int argc, const char * argv[])
 						afterRename(&flast, &fCrnt, &CrntStr);
 						readStringFromConsole(CrntStr, Cyan, White);
 					}
-					else showError("Ошибка при переименовании", "");
 					break;
 				case 61:
 					if (source != NULL) fclose(source);
@@ -362,11 +361,12 @@ int main(int argc, const char * argv[])
 				}
 				break;
 			case 't':
-				txtRead(fCrnt->file.name, fCrnt->file.size);
+				//txtRead(fCrnt->file.name, fCrnt->file.size);
 				break;
 			case 49:
 			    ConsoleSize = { 80,25 };
 				getFramePath(argv);
+				SetBufferSize();
 				SetBufferSize();
 				saveClearStr();
 				RefreshFiles(&flast, &CrntStr, &fCrnt);
