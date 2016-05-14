@@ -315,7 +315,7 @@ void hideHelpHEX(CHAR_INFO *chiBuffer)
 		coordBufCoord,  // top left dest. cell in chiBuffer 
 		&srctReadRect); // screen buffer source rectangle 
 }
-void runHEX(char *FileName, _fsize_t FileSize)
+void runHEX(char *FileName, _fsize_t *FileSize)
 {
 	FILE *fHex;
 	fHex = fopen(FileName, "r+b");
@@ -331,14 +331,14 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	short left = ConsoleSize.X / 2 - 40;
 	short right = ConsoleSize.X / 2 + 40;
 	showWindow(&chiBuffer, top, left, bottom, right, Magenta);
-	unsigned int lastAdress = FileSize / 16;
+	unsigned int lastAdress = (*FileSize) / 16;
 	int lastStl;
-	if (FileSize % 16 == 15)
+	if ((*FileSize) % 16 == 15)
 	{
 		lastStl = 0;
 		lastAdress++;
 	}
-	else lastStl = FileSize % 16 + 1;
+	else lastStl = (*FileSize) % 16 + 1;
 	unsigned char c, *ch, instring[36];
 	for (int i = 0; i < 36; ++i) instring[i] = '\0';
 	bool secondChar = false;
@@ -350,7 +350,13 @@ void runHEX(char *FileName, _fsize_t FileSize)
 	else
 	{
 		for (adress = 0; adress < lastAdress; adress++) showStrHEX(fHex, adress, adress, 16);
-		showStrHEX(fHex, adress, adress, lastStl - 1);
+		if (lastStl) showStrHEX(fHex, adress, adress, lastStl - 1);
+		else
+		{
+			SetCursorPosition(ConsoleSize.X / 2 - 38, 2 + adress);
+			SetColor(Magenta, Yellow);
+			printf("%08X  ", adress);
+		}
 	}
 	adress = 0;
 	int key, CrntStr = 0, CrntStl = 0;
@@ -452,10 +458,12 @@ void runHEX(char *FileName, _fsize_t FileSize)
 					}
 					selectHEX(CrntStr, CrntStl, true);
 				}
+				for (int i = 0; i < 36; ++i) instring[i] = '\0';
 				break;
 			case 60:
 				if (goToHEX(&adress, lastAdress))
 				{
+					selectHEX(CrntStr, CrntStl, false);
 					if (lastAdress - adress > ConsoleSize.Y - 6) showAllHEX(fHex, adress);
 					else
 					{
@@ -542,6 +550,7 @@ void runHEX(char *FileName, _fsize_t FileSize)
 			}
 		}
 	} while (key != 27);
+	*FileSize = lastAdress * 16 + lastStl - 1;
 	fclose(fHex);
 	hideHelpHEX(helpBuffer);
 	hideWindow(chiBuffer, top, left, bottom, right);
@@ -588,6 +597,11 @@ bool searchWindowHEX(unsigned char instring[36])
 	do
 	{
 		key = _getch();
+		if ((key == 0) && (_kbhit()))
+		{
+			key = _getch();
+			continue;
+		}
 		if (key == 224)
 		{
 			key = _getch();
@@ -667,6 +681,16 @@ bool searchWindowHEX(unsigned char instring[36])
 		}
 		if (key == 13)
 		{
+			if (instring[0] == '\0')
+			{
+				showError("Строка не должна быть пустой", "");
+				if (bString)
+					SetCursorPosition(left + 3 + i, top + 2);
+				else
+					SetCursorPosition(left + 3 + 3 * i - 36 * hStr + j, top + 4 + hStr);
+				SetColor(Black, White);
+				continue;
+			}
 			hideWindow(chiBuffer, top, left, bottom, right);
 			delete[] chiBuffer;
 			EnableCursor(false);
@@ -731,7 +755,7 @@ bool goToHEX(unsigned int *adress, unsigned int lastAdress)
 	printf("Введите адрес, куда хотите перейти");
 	SetColor(Black, White);
 	SetCursorPosition(left + 2, top + 2);
-	printf("%08X ", *adress);
+	printf("%08x ", *adress);
 	EnableCursor(true);
 	int key, i = 8, prevAdress = *adress;
 	SetCursorPosition(left + 2 + i, top + 2);
@@ -750,7 +774,8 @@ bool goToHEX(unsigned int *adress, unsigned int lastAdress)
 		{
 			i++;
 			printf("%c", key);
-			*adress = *adress * 16 + key - '0';
+			if ((key >= '0') && (key <= '9')) *adress = *adress * 16 + key - '0';
+			else *adress = *adress * 16 + key - 'a' + 10;
 		}
 		if (key == 13)
 		{

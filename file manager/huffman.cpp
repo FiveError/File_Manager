@@ -84,7 +84,12 @@ void huffman(char * Filename)
 	*(Filename + len + 1) = '\0';
 	ofstream f(Filename, ios::binary);
 	--kolvo;
-	f.write((char*)&kolvo, sizeof(kolvo));
+	char str[4];
+	str[3] = kolvo << 12;
+	str[2] = kolvo << 8;
+	str[1] = kolvo << 4;
+	str[0] = kolvo;
+	f.write(str, 4);
 	int treeSize = tree.size();
 	f.write((char*)&treeSize, sizeof(treeSize));
 	for (auto i : tree)
@@ -127,7 +132,7 @@ void unhuffman(char *Filename)
 				data.push_back((ch&(1 << i)) != 0);
 			
 		}
-		auto n = tree.size() - 1;
+		auto n = tree.size()-1;
 		*(Filename + strlen(Filename) - 1) = '\0';
 		ofstream f1(Filename);
 		for (auto i : data)

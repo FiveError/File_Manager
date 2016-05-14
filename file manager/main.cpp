@@ -209,7 +209,9 @@ int main(int argc, const char * argv[])
 				}
 				else
 				{
-					runHEX(fCrnt->file.name, fCrnt->file.size);
+					runHEX(fCrnt->file.name, &(fCrnt->file.size));
+					SetColor(Cyan, White);
+					showStr(fCrnt->file.name, fCrnt->file.size, fCrnt->file.attrib, CrntStr + 2, true);
 					addLog(fCrnt->file.name, "INFO", "Открыт в HEX редакторе");
 				}
 				break;
@@ -245,7 +247,10 @@ int main(int argc, const char * argv[])
 					}
 					break;
 				case 61:
-					if (source != NULL) fclose(source);
+					if (source != NULL) {
+						fclose(source);
+						source = NULL;
+					}
 					pathCopy[0] = '\0';
 					memcpy(fCopy, fCrnt->file.name, 260);
 					if (fCrnt->file.attrib & _A_SUBDIR)
@@ -378,20 +383,20 @@ int main(int argc, const char * argv[])
 				saveClearStr();
 				RefreshFiles(&flast, &CrntStr, &fCrnt);
 				break;
-			case 51:
-				ConsoleSize = { 206,70 };
-				getFramePath(argv);
-				SetBufferSize();
-				saveClearStr();
-				RefreshFiles(&flast, &CrntStr, &fCrnt);
-				break;
-			case 52:
-				ConsoleSize = { 248,70 };
-				getFramePath(argv);
-				SetBufferSize();
-				saveClearStr();
-				RefreshFiles(&flast, &CrntStr, &fCrnt);
-				break;
+			//case 51:
+			//	ConsoleSize = { 206,70 };
+			//	getFramePath(argv);
+			//	SetBufferSize();
+			//	saveClearStr();
+			//	RefreshFiles(&flast, &CrntStr, &fCrnt);
+			//	break;
+			//case 52:
+			//	ConsoleSize = { 248,70 };
+			//	getFramePath(argv);
+			//	SetBufferSize();
+			//	saveClearStr();
+			//	RefreshFiles(&flast, &CrntStr, &fCrnt);
+			//	break;
 			case 27:
 				if (!exitFM("Вы точно хотите выйти?", Green)) key = 1;
 			default:

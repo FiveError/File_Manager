@@ -1,2 +1,3 @@
-﻿  main.cpp
+﻿  huffman.cpp
+c:\projects\filemanager\file_manager\file manager\huffman.cpp(42): warning C4267: аргумент: преобразование из "size_t" в "const char"; возможна потеря данных
   file manager.vcxproj -> C:\Projects\FileManager\File_Manager\Debug\file manager.exe

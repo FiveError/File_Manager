@@ -666,7 +666,7 @@ void afterRename(files ** flast, files ** fCrnt, int * CrntStr)
 }
 void CountFileFolder(char *FolderPath, unsigned int *countFile, unsigned int *countFolder, unsigned int *sizeFolder)
 {
-	std::this_thread::sleep_for(std::chrono::microseconds(20));
+	std::this_thread::sleep_for(std::chrono::microseconds(40));
 		int sucsess = _chdir(FolderPath);
 		if (!sucsess)
 		{
@@ -802,7 +802,7 @@ void FolderInfo(files * fCrnt)
 			printf("%dB", sizeFolder);
 		}
 		tmp3 = sizeFolder;
-		std::this_thread::sleep_for(std::chrono::milliseconds(40));
+		std::this_thread::sleep_for(std::chrono::milliseconds(150));
 	} while ((tmp != countFile) || (tmp1 != countFolder) || (tmp3 != sizeFolder));
 	SetCursorPosition(left + 5, top + 11);
 	printf("%d", countFile);
