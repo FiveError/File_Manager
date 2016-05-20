@@ -1,171 +1,324 @@
-#include "huffman.h"
-#include <iostream>
-#include <fstream>
-#include <map>
+
+
+#include <string>
 #include <vector>
-#pragma pack(1)
+#include <map>
+#include <cassert>
+#include "huffman.h"
+
 using namespace std;
-struct Node
+
+struct pnode
 {
-	char ch;
-	int parent;
-	int zero;
-	int one;
-	bool branch;
+	char ch; // char
+	float p; // probability
 };
-void huffman(char * Filename)
+
+static int pnode_compare(const void *elem1, const void *elem2)
 {
-	unsigned int kolvo = 0;
-	int weight[0x100];
-	for (auto &i : weight)
-		i = 0;
+	const pnode a = *(pnode*)elem1;
+	const pnode b = *(pnode*)elem2;
+	if (a.p < b.p) return 1; // 1 - less (reverse for decreasing sort)
+	else if (a.p > b.p) return -1;
+	return 0;
+}
+
+struct treenode : public pnode
+{
+	char lcode;
+	char rcode;
+	treenode *left; // left child
+	treenode *right; // right child
+};
+
+class Coder
+{
+private:
+	int tsize; // table size (number of chars)
+	pnode *ptable; // table of probabilities
+	map<char, string> codes; // codeword for each char
+
+public:
+	void Encode(const char *inputFilename, const char *outputFilename)
 	{
-		ifstream f(Filename);
-		while (!f.eof())
+		map<char, int> freqs; // frequency for each char from input text
+		int i;
+
+		//  Opening input file
+		//
+		FILE *inputFile;
+		inputFile = fopen(inputFilename, "r");
+		assert(inputFile);
+
+		//  Counting chars
+		//
+		char ch; // char
+		unsigned total = 0;
+		while (fscanf(inputFile, "%c", &ch) != EOF)
 		{
-			++kolvo;
-			unsigned char ch;
-			f.read((char *)&ch, sizeof(ch));
-			++weight[ch];
+			freqs[ch]++;
+			total++;
 		}
-		f.close();
+		tsize = (int)freqs.size();
+
+		//  Building decreasing freqs table
+		//
+		ptable = new pnode[tsize];
+		assert(ptable);
+		float ftot = float(total);
+		map<char, int>::iterator fi;
+		for (fi = freqs.begin(), i = 0; fi != freqs.end(); ++fi, ++i)
+		{
+			ptable[i].ch = (*fi).first;
+			ptable[i].p = float((*fi).second) / ftot;
+		}
+		qsort(ptable, tsize, sizeof(pnode), pnode_compare);
+
+		//  Encoding
+		//
+		EncHuffman();
+
+		//  Opening output file
+		//
+		FILE *outputFile;
+		outputFile = fopen(outputFilename, "wb");
+		assert(outputFile);
+
+		//  Outputing ptable and codes
+		//
+		printf("%i\n", tsize);
+		fprintf(outputFile, "%i\n", tsize);
+		for (i = 0; i<tsize; i++)
+		{
+			printf("%c\t%f\t%s\n", ptable[i].ch, ptable[i].p, codes[ptable[i].ch].c_str());
+			fprintf(outputFile, "%c\t%f\t%s\n", ptable[i].ch, ptable[i].p, codes[ptable[i].ch].c_str());
+		}
+
+		//  Outputing encoded text
+		//
+		fseek(inputFile, SEEK_SET, 0);
+		printf("\n");
+		fprintf(outputFile, "\n");
+		while (fscanf(inputFile, "%c", &ch) != EOF)
+		{
+			printf("%s", codes[ch].c_str());
+			fprintf(outputFile, "%s", codes[ch].c_str());
+		}
+		printf("\n");
+
+		//  Cleaning
+		//
+		codes.clear();
+		delete[] ptable;
+
+		//  Closing files
+		//
+		fclose(outputFile);
+		fclose(inputFile);
 	}
 
-	multimap<int, int> sortedWeight;
-	vector<Node> tree;
-	map<char, int> charMap;
-	for (size_t i = 0; i < 0x100; ++i)
+	void Decode(const char *inputFilename, const char *outputFilename)
 	{
-		if (weight[i] > 0)
+		//  Opening input file
+		//
+		FILE *inputFile;
+		inputFile = fopen(inputFilename, "r");
+		assert(inputFile);
+
+		//  Loading codes
+		//
+		fscanf(inputFile, "%i", &tsize);
+		char ch, code[128];
+		float p;
+		int i;
+		fgetc(inputFile); // skip end line
+		for (i = 0; i<tsize; i++)
 		{
-			tree.push_back(Node{ (char)i,-1,-1,-1,false });
-			charMap[i] = tree.size() - 1;
-			sortedWeight.insert(make_pair(weight[i], tree
-				.size() - 1));
+			ch = fgetc(inputFile);
+			fscanf(inputFile, "%f %s", &p, code);
+			codes[ch] = code;
+			fgetc(inputFile); // skip end line
 		}
-	}
-	while (sortedWeight.size() > 1)
-	{
-		int w0 = begin(sortedWeight)->first;
-		int n0 = begin(sortedWeight)->second;
-		sortedWeight.erase(begin(sortedWeight));
-		int w1 = begin(sortedWeight)->first;
-		int n1 = begin(sortedWeight)->second;
-		sortedWeight.erase(begin(sortedWeight));
-		tree.push_back(Node{ '\0',-1,n0,n1,false });
-		tree[n0].parent = tree.size() - 1;
-		tree[n0].branch = false;
-		tree[n1].parent = tree.size() - 1;
-		tree[n1].branch = true;
-		sortedWeight.insert(make_pair(w0 + w1, tree.size() - 1));
-	}
-	vector<bool> data;
-	
-	{
-		ifstream f(Filename, ios::binary);
-		while (!f.eof())
+		fgetc(inputFile); // skip end line
+
+						  //  Opening output file
+						  //
+		FILE *outputFile;
+		outputFile = fopen(outputFilename, "w");
+		assert(outputFile);
+
+		//  Decoding and outputing to file
+		//
+		string accum = "";
+		map<char, string>::iterator ci;
+		while ((ch = fgetc(inputFile)) != EOF)
 		{
-			unsigned char ch;
-			f.read((char *)&ch, sizeof(ch));
-			vector<bool> compressedChar;
-			auto n = tree[charMap[ch]];
-			
-			while (n.parent != -1)
-			{
-				compressedChar.push_back(n.branch);
-				n = tree[n.parent];
-			}
-			data.insert(end(data), compressedChar.rbegin(), compressedChar.rend());
-		}
-		f.close();
-	}
-	int len = strlen(Filename);
-	memset(Filename + strlen(Filename), 'h' , 1);
-	*(Filename + len + 1) = '\0';
-	ofstream f(Filename, ios::binary);
-	--kolvo;
-	char str[4];
-	str[3] = kolvo << 12;
-	str[2] = kolvo << 8;
-	str[1] = kolvo << 4;
-	str[0] = kolvo;
-	f.write(str, 4);
-	int treeSize = tree.size();
-	f.write((char*)&treeSize, sizeof(treeSize));
-	for (auto i : tree)
-		f.write((char*)&i, sizeof(i));
-	for (size_t i = 0; i <= data.size() / 8; ++i)
-	{
-		unsigned char ch = 0;
-		for (int j = 0; j < 8; ++j)
-			if ((i * 8 + j) >= data.size()) break;
-			else
-			if (data[i * 8 + j])
-				ch |= (1 << j);
-		f.write((char*)&ch, sizeof(ch));
-	}
-	f.close();
-}
-void unhuffman(char *Filename)
-{
-	bool enter = true;
-	if (*(Filename + strlen(Filename)-1) == 'h')
-	{
-		vector<Node> tree;
-		ifstream f(Filename, ios::binary);
-		unsigned int kolvo;
-		f.read((char*)&kolvo, sizeof(kolvo));
-		int treeSize;
-		f.read((char*)&treeSize, sizeof(treeSize));
-		for (int i = 0; i < treeSize; ++i)
-		{
-			Node n;
-			f.read((char*)&n, sizeof(n));
-			tree.push_back(n);
-		}
-		vector<bool> data;
-		while (!f.eof())
-		{
-			unsigned char ch;
-			f.read((char *)&ch, sizeof(ch));
-			for (int i = 0; i < 8; ++i)
-				data.push_back((ch&(1 << i)) != 0);
-			
-		}
-		auto n = tree.size()-1;
-		*(Filename + strlen(Filename) - 1) = '\0';
-		ofstream f1(Filename);
-		for (auto i : data)
-		{
-			if (i)
-				n = tree[n].one;
-			else
-				n = tree[n].zero;
-			if (tree[n].one == -1)
-			{
-				if (kolvo--)
+			accum += ch;
+			for (ci = codes.begin(); ci != codes.end(); ++ci)
+				if (!strcmp((*ci).second.c_str(), accum.c_str()))
 				{
-					if (tree[n].ch == '\n' && enter)
-					{
-						f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
-						n = tree.size() - 1;
-						kolvo++;
-						enter = false;
-						continue;
-					}
-					if (tree[n].ch == '\n' && !enter)
-					{
-						enter = true;
-						n = tree.size() - 1;
-						continue;
-					}	
-					f1.write((char*)&tree[n].ch, sizeof(tree[n].ch));
-					n = tree.size() - 1;
+					accum = "";
+					printf("%c", (*ci).first);
+					fprintf(outputFile, "%c", (*ci).first);
 				}
-				else break;
-			}
 		}
-		f.close();
-		f1.close();
+		printf("\n");
+
+		//  Cleaning
+		//
+		fclose(outputFile);
+		fclose(inputFile);
 	}
+
+private:
+	void EncHuffman()
+	{
+		//  Creating leaves (initial top-nodes)
+		//
+		treenode *n;
+		vector<treenode*> tops; // top-nodes
+		int i, numtop = tsize;
+		for (i = 0; i<numtop; i++)
+		{
+			n = new treenode;
+			assert(n);
+			n->ch = ptable[i].ch;
+			n->p = ptable[i].p;
+			n->left = NULL;
+			n->right = NULL;
+			tops.push_back(n);
+		}
+
+		//  Building binary tree.
+		//  Combining last two nodes, replacing them by new node
+		//  without invalidating sort
+		//
+		while (numtop > 1)
+		{
+			n = new treenode;
+			assert(n);
+			n->p = tops[numtop - 2]->p + tops[numtop - 1]->p;
+			n->left = tops[numtop - 2];
+			n->right = tops[numtop - 1];
+			if (n->left->p < n->right->p)
+			{
+				n->lcode = '0';
+				n->rcode = '1';
+			}
+			else
+			{
+				n->lcode = '1';
+				n->rcode = '0';
+			}
+			tops.pop_back();
+			tops.pop_back();
+			bool isins = false;
+			std::vector<treenode*>::iterator ti;
+			for (ti = tops.begin(); ti != tops.end(); ++ti)
+				if ((*ti)->p < n->p)
+				{
+					tops.insert(ti, n);
+					isins = true;
+					break;
+				}
+			if (!isins) tops.push_back(n);
+			numtop--;
+		}
+
+		//  Building codes
+		//
+		treenode *root = tops[0];
+		GenerateCode(root);
+
+		//  Cleaning
+		//
+		DestroyNode(root);
+		tops.clear();
+	}
+
+	void GenerateCode(treenode *node) // for outside call: node is root
+	{
+		static string sequence = "";
+		if (node->left)
+		{
+			sequence += node->lcode;
+			GenerateCode(node->left);
+		}
+
+		if (node->right)
+		{
+			sequence += node->rcode;
+			GenerateCode(node->right);
+		}
+
+		if (!node->left && !node->right)
+			codes[node->ch] = sequence;
+
+		int l = (int)sequence.length();
+		if (l > 1) sequence = sequence.substr(0, l - 1);
+		else sequence = "";
+	}
+
+	void DestroyNode(treenode *node) // for outside call: node is root
+	{
+		if (node->left)
+		{
+			DestroyNode(node->left);
+			delete node->left;
+			node->left = NULL;
+		}
+
+		if (node->right)
+		{
+			DestroyNode(node->right);
+			delete node->right;
+			node->right = NULL;
+		}
+	}
+};
+
+
+void huffman(char*Filename, char * option)
+{
+	int i = 1;
+	int dFlag = 0;
+	char inputFilename[128];
+	char outputFilename[128];
+
+
+
+	if (strcmp(option, "d") == 0) {
+		dFlag = 1;
+		i++;
+		
+	}
+
+	strcpy(inputFilename, Filename);
+	int len = strlen(Filename);
+		if (dFlag) {
+			*(Filename + len - 1) = '\0';
+			strcpy(outputFilename, Filename);
+		}
+		else {
+			
+			*(Filename + len) = 'h';
+			*(Filename + len+1) = '\0';
+			strcpy(outputFilename, Filename);
+		}
+
+	//  Calling encoding or decoding subroutine
+	//
+	Coder *coder;
+	coder = new Coder;
+	assert(coder);
+	if (!dFlag) {
+		coder->Encode(inputFilename, outputFilename);
+	}
+	else {
+		coder->Decode(inputFilename, outputFilename);
+	}
+	delete coder;
+
+
 }
+

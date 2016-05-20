@@ -321,11 +321,11 @@ int main(int argc, const char * argv[])
 					}
 					break;
 				case 65:    //F7
-					huffman(fCrnt->file.name);
+					huffman(fCrnt->file.name,"e");
 					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
 				case 66: 
-					unhuffman(fCrnt->file.name);
+					huffman(fCrnt->file.name,"d");
 					RefreshFiles(&flast, &CrntStr, &fCrnt);
 					break;
 				case 67:    //F9

@@ -292,6 +292,10 @@ void showHelpHEX(CHAR_INFO **chiBuffer)
 	printf(" ");
 	SetColor(Red, White);
 	printf("F2-CHANGEADRESS");
+	SetColor(Black, White);
+	printf(" ");
+	SetColor(Red, White);
+	printf("F3-EXIT");
 }
 void hideHelpHEX(CHAR_INFO *chiBuffer)
 {
@@ -317,12 +321,18 @@ void hideHelpHEX(CHAR_INFO *chiBuffer)
 }
 void runHEX(char *FileName, _fsize_t *FileSize)
 {
-	FILE *fHex;
+	FILE *fHex, *fHexCopy;
+	fHexCopy = tmpfile();
 	fHex = fopen(FileName, "r+b");
-	if (!fHex) {
+	char buffer[65356];
+		if (!fHex) {
 		showError("Ошибка открытия файла", "");
 		return;
 	}
+		do {
+			if (!fgets(buffer, 65356, fHex)) break;
+			fputs(buffer, fHexCopy);
+		} while (!feof(fHex));
 	CHAR_INFO *helpBuffer = new CHAR_INFO[ConsoleSize.X];
 	showHelpHEX(&helpBuffer);
 	CHAR_INFO *chiBuffer = new CHAR_INFO[80 * (ConsoleSize.Y - 2)];
@@ -483,6 +493,24 @@ void runHEX(char *FileName, _fsize_t *FileSize)
 					selectHEX(CrntStr, CrntStl, true);
 				}
 				break;
+			case 61:
+			{
+				rewind(fHexCopy);
+				rewind(fHex);
+				while (!feof(fHexCopy)) {
+					if (fgets(buffer, 65356, fHexCopy) == NULL) break;
+					fputs(buffer, fHex);
+				}
+				*FileSize = lastAdress * 16 + lastStl - 1;
+				fclose(fHex);
+				fclose(fHexCopy);
+				hideHelpHEX(helpBuffer);
+				hideWindow(chiBuffer, top, left, bottom, right);
+				delete[] helpBuffer;
+				delete[] chiBuffer;
+				return;
+				break;
+			}
 			default:
 				break;
 			}
@@ -552,6 +580,7 @@ void runHEX(char *FileName, _fsize_t *FileSize)
 	} while (key != 27);
 	*FileSize = lastAdress * 16 + lastStl - 1;
 	fclose(fHex);
+	fclose(fHexCopy);
 	hideHelpHEX(helpBuffer);
 	hideWindow(chiBuffer, top, left, bottom, right);
 	delete[] helpBuffer;

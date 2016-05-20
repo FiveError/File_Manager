@@ -1,3 +1,9 @@
-﻿  huffman.cpp
-c:\projects\filemanager\file_manager\file manager\huffman.cpp(42): warning C4267: аргумент: преобразование из "size_t" в "const char"; возможна потеря данных
-  file manager.vcxproj -> C:\Projects\FileManager\File_Manager\Debug\file manager.exe
+﻿  fhex.cpp
+c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(298): warning C4129: ' ': unrecognized character escape sequence
+c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(359): warning C4018: '>': signed/unsigned mismatch
+c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(451): warning C4018: '>': signed/unsigned mismatch
+c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(457): warning C4018: '<': signed/unsigned mismatch
+c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(477): warning C4018: '>': signed/unsigned mismatch
+c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(483): warning C4018: '<': signed/unsigned mismatch
+c:\users\сергей\desktop\file_manager\file manager\fhex.cpp(352): warning C4101: 'ch': unreferenced local variable
+  file manager.vcxproj -> C:\Users\Сергей\Desktop\file_manager\Debug\file manager.exe
